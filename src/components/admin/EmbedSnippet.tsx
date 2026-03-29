@@ -11,11 +11,11 @@ export function EmbedSnippet({ menuUrl }: EmbedSnippetProps) {
 
   const snippet = `<iframe
   src="${menuUrl}"
-  width="100%"
-  height="600"
-  style="border:none; border-radius:8px;"
+  allowtransparency="true"
+  scrolling="no"
   loading="lazy"
   title="Denní menu"
+  style="width:100%; aspect-ratio:210/297; border:none; display:block; background:transparent;"
 ></iframe>`;
 
   async function copy() {
