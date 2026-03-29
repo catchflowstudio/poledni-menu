@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import bcrypt from "bcrypt";
+
+async function checkAuth() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("sa_token")?.value;
+  const secret = process.env.SUPERADMIN_SECRET;
+  return secret && token === secret;
+}
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+/** PATCH — reset hesla nebo update nastavení */
+export async function PATCH(req: Request, { params }: Props) {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: "Nepřihlášen." }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const body = await req.json();
+  const supabase = getSupabaseAdmin();
+
+  // Reset hesla
+  if (body.password) {
+    if (body.password.length < 8) {
+      return NextResponse.json({ error: "Heslo musí mít alespoň 8 znaků." }, { status: 400 });
+    }
+    const password_hash = await bcrypt.hash(body.password, 12);
+    const { error } = await supabase
+      .from("restaurants")
+      .update({ password_hash })
+      .eq("id", id);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, message: "Heslo bylo změněno." });
+  }
+
+  // Update ostatních polí (name, phone, serves_weekend)
+  const allowed: Record<string, unknown> = {};
+  if (typeof body.name === "string") allowed.name = body.name;
+  if (typeof body.phone === "string") allowed.phone = body.phone || null;
+  if (typeof body.serves_weekend === "boolean") allowed.serves_weekend = body.serves_weekend;
+
+  const { error } = await supabase.from("restaurants").update(allowed).eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ ok: true });
+}
+
+/** DELETE — smaže restauraci a všechna její menu */
+export async function DELETE(_req: Request, { params }: Props) {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: "Nepřihlášen." }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const supabase = getSupabaseAdmin();
+
+  // Nejdřív získej slug pro smazání souborů ze Storage
+  const { data: restaurant } = await supabase
+    .from("restaurants")
+    .select("slug")
+    .eq("id", id)
+    .single();
+
+  if (!restaurant) {
+    return NextResponse.json({ error: "Restaurace nenalezena." }, { status: 404 });
+  }
+
+  // Smaž soubory ze Storage
+  const { data: files } = await supabase.storage
+    .from("daily-menus")
+    .list(restaurant.slug);
+
+  if (files && files.length > 0) {
+    const paths = files.map((f) => `${restaurant.slug}/${f.name}`);
+    await supabase.storage.from("daily-menus").remove(paths);
+  }
+
+  // Smaž záznamy menu (CASCADE by to zvládl, ale raději explicitně)
+  await supabase.from("menus").delete().eq("restaurant_id", id);
+
+  // Smaž restauraci
+  const { error } = await supabase.from("restaurants").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ ok: true });
+}

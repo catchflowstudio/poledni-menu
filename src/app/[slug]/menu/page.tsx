@@ -18,10 +18,47 @@ export const dynamic = "force-dynamic";
 
 export default async function MenuPage({ params }: Props) {
   const { slug } = await params;
-  const restaurant = await getRestaurant(slug);
-  if (!restaurant) notFound();
 
-  const state = await getPublicMenuState(restaurant.id, restaurant.serves_weekend);
+  let restaurant;
+  let state;
+
+  try {
+    restaurant = await getRestaurant(slug);
+    if (!restaurant) notFound();
+    state = await getPublicMenuState(restaurant.id, restaurant.serves_weekend);
+  } catch {
+    // Supabase nebo síťová chyba — zobraz neutrální fallback
+    return (
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "210 / 297",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            textAlign: "center",
+            padding: "24px 32px",
+            borderRadius: 4,
+            background: "rgba(255,255,255,0.82)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(0,0,0,0.08)",
+            maxWidth: "80%",
+          }}
+        >
+          <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: 6 }}>
+            Menu není momentálně dostupné
+          </p>
+          <p style={{ fontSize: "0.78rem", color: "#999" }}>
+            Zkuste to prosím za chvíli nebo zavolejte přímo do restaurace.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   /* ── Menu existuje: fotka v A4 rámci + lightbox ── */
   if (state.type === "menu" && state.menu) {

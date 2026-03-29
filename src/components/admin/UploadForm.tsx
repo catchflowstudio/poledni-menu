@@ -134,6 +134,7 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
+          {/* Skrytý input pro soubory — desktop */}
           <input
             ref={fileInputRef}
             type="file"
@@ -160,16 +161,57 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
           )}
         </div>
 
-        {preview && (
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => fileInputRef.current?.click()}
-            style={{ width: "100%", marginTop: 8, fontSize: "0.8rem" }}
-          >
-            Změnit fotku
-          </button>
-        )}
+        {/* Mobilní tlačítka — focení fotoaparátem nebo galerie */}
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          {preview ? (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ flex: 1, fontSize: "0.8rem" }}
+            >
+              Změnit fotku
+            </button>
+          ) : (
+            <>
+              {/* Fotoaparát — funguje na mobilu */}
+              <label
+                style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                  gap: 6, padding: "10px 16px", borderRadius: "var(--radius-sm)",
+                  background: "rgba(248,250,252,0.06)", border: "1px solid var(--border)",
+                  color: "var(--muted)", fontSize: "0.82rem", cursor: "pointer",
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+                📸 Vyfotit
+              </label>
+              {/* Galerie — klasický výběr souboru */}
+              <label
+                style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                  gap: 6, padding: "10px 16px", borderRadius: "var(--radius-sm)",
+                  background: "rgba(248,250,252,0.06)", border: "1px solid var(--border)",
+                  color: "var(--muted)", fontSize: "0.82rem", cursor: "pointer",
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+                🖼 Z galerie
+              </label>
+            </>
+          )}
+        </div>
 
         {/* Datum */}
         <div style={{ marginTop: 20 }}>
