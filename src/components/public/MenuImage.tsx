@@ -1,21 +1,31 @@
+"use client";
+
 interface MenuImageProps {
   src: string;
   alt?: string;
 }
 
-/* Server component — žádný "use client" potřeba.
-   Klik otevře obrázek v nové záložce (jediné spolehlivé
-   řešení uvnitř iframu — position:fixed by se fixovalo
-   na viewport iframu, ne celé stránky). */
+/* Zoom otevírá plovoucí popup okno v poměru A4.
+   window.open je jediné spolehlivé řešení pro escape z iframe —
+   position:fixed uvnitř iframu se fixuje na viewport iframu, ne stránky. */
 export function MenuImage({ src, alt = "Polední menu" }: MenuImageProps) {
+  function openZoom() {
+    const w = 720;
+    const h = Math.round(w * (297 / 210)); // A4 výška
+    const left = Math.round(window.screen.width / 2 - w / 2);
+    const top = Math.round(window.screen.height / 2 - h / 2);
+    window.open(
+      src,
+      "menu-zoom",
+      `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=no,location=no,menubar=no,toolbar=no,status=no`
+    );
+  }
+
   return (
-    <a
-      href={src}
-      target="_blank"
-      rel="noopener noreferrer"
-      title="Kliknutím zobrazit celý obrázek"
+    <div
+      onClick={openZoom}
+      title="Kliknutím zobrazit v plovoucím okně"
       style={{
-        display: "block",
         width: "100%",
         aspectRatio: "210 / 297",
         overflow: "hidden",
@@ -33,6 +43,6 @@ export function MenuImage({ src, alt = "Polední menu" }: MenuImageProps) {
           display: "block",
         }}
       />
-    </a>
+    </div>
   );
 }
