@@ -17,8 +17,6 @@ const TIME_OPTIONS = [
 
 interface Props {
   initialValues: {
-    phone: string | null;
-    static_menu_url: string | null;
     fallback_type: FallbackType;
     fallback_title: string;
     fallback_text: string;
@@ -98,19 +96,6 @@ export function RestaurantSettings({ initialValues }: Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-      {/* Telefon */}
-      <div>
-        <label style={labelStyle}>Telefon</label>
-        <input
-          className="input"
-          value={values.phone ?? ""}
-          onChange={(e) => update("phone", e.target.value || null)}
-          placeholder="+420 777 000 111"
-        />
-      </div>
-
-      <div style={{ height: 1, background: "var(--border)" }} />
-
       {/* Dny s menu — Monday first */}
       <div>
         <label style={labelStyle}>Které dny vaříte polední menu?</label>

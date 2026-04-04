@@ -91,25 +91,27 @@ export async function getPublicMenuState(
   type: "menu" | "closed_day" | "no_menu";
   menu: Menu | null;
   tomorrowMenu: Menu | null;
+  menuDate: string; // YYYY-MM-DD — na který den se menu vztahuje
 }> {
   const openingDays = restaurant.opening_days ?? [1, 2, 3, 4, 5];
   const activeFrom = restaurant.menu_active_from ?? "00:00";
+  const today = getTodayPrague();
+  const tomorrow = getTomorrowPrague();
 
   // Speciální případ: "18:00" znamená "od 18:00 předchozího dne"
   // → po 18:00 se cílový den posouvá na zítřek
   if (activeFrom === "18:00" && isPastTimePrague("18:00")) {
-    const tomorrow = getTomorrowPrague();
     const tomorrowDayOfWeek = getTomorrowDayOfWeek();
 
     if (!openingDays.includes(tomorrowDayOfWeek)) {
-      return { type: "closed_day", menu: null, tomorrowMenu: null };
+      return { type: "closed_day", menu: null, tomorrowMenu: null, menuDate: tomorrow };
     }
 
     const menu = await getMenuForDate(restaurant.id, tomorrow);
     if (menu) {
-      return { type: "menu", menu, tomorrowMenu: null };
+      return { type: "menu", menu, tomorrowMenu: null, menuDate: tomorrow };
     }
-    return { type: "no_menu", menu: null, tomorrowMenu: null };
+    return { type: "no_menu", menu: null, tomorrowMenu: null, menuDate: tomorrow };
   }
 
   // Standardní logika: cílový den = dnes
@@ -117,23 +119,23 @@ export async function getPublicMenuState(
 
   if (!openingDays.includes(dayOfWeek)) {
     const tomorrowMenu = await getTomorrowMenu(restaurant.id);
-    return { type: "closed_day", menu: null, tomorrowMenu };
+    return { type: "closed_day", menu: null, tomorrowMenu, menuDate: today };
   }
 
   // Zkontroluj menu_active_from — pokud ještě nenastal čas (08:00 apod.)
   if (activeFrom !== "00:00" && activeFrom !== "18:00" && !isPastTimePrague(activeFrom)) {
     const tomorrowMenu = await getTomorrowMenu(restaurant.id);
-    return { type: "no_menu", menu: null, tomorrowMenu };
+    return { type: "no_menu", menu: null, tomorrowMenu, menuDate: today };
   }
 
   const menu = await getTodayMenu(restaurant.id);
   const tomorrowMenu = await getTomorrowMenu(restaurant.id);
 
   if (menu) {
-    return { type: "menu", menu, tomorrowMenu };
+    return { type: "menu", menu, tomorrowMenu, menuDate: today };
   }
 
-  return { type: "no_menu", menu: null, tomorrowMenu };
+  return { type: "no_menu", menu: null, tomorrowMenu, menuDate: today };
 }
 
 /** Vrátí data pro admin dashboard */

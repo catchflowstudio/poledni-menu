@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getRestaurant, getPublicMenuState } from "@/lib/menu/logic";
+import { formatDateCzech } from "@/lib/date/prague";
 import { MenuImage } from "@/components/public/MenuImage";
 import { MenuVisibility } from "@/components/public/MenuVisibility";
 import type { Metadata } from "next";
@@ -61,11 +62,24 @@ export default async function MenuPage({ params }: Props) {
     );
   }
 
-  /* ── Menu existuje: fotka v A4 rámci + lightbox ── */
+  const dateLabel = formatDateCzech(state.menuDate);
+
+  /* ── Menu existuje: datum + fotka v A4 rámci + lightbox ── */
   if (state.type === "menu" && state.menu) {
     return (
       <>
         <MenuVisibility visible={true} />
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: "0.82rem",
+            color: "#888",
+            padding: "8px 0 4px",
+            letterSpacing: "0.02em",
+          }}
+        >
+          {dateLabel}
+        </p>
         <MenuImage src={state.menu.image_url} />
       </>
     );

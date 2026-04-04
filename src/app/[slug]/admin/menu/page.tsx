@@ -4,7 +4,6 @@ import { getDashboardData } from "@/lib/menu/logic";
 import {
   getTodayPrague,
   getTomorrowPrague,
-  formatDateCzech,
   formatDateCzechShort,
   getPragueDayOfWeek,
 } from "@/lib/date/prague";
@@ -55,27 +54,16 @@ export default async function AdminDashboard({ params }: Props) {
             padding: "20px 0 20px",
           }}
         >
-          <div>
-            <h1
-              style={{
-                fontFamily: "var(--font-heading)",
-                fontSize: "1.15rem",
-                fontWeight: 700,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {restaurant.name}
-            </h1>
-            <p
-              style={{
-                fontSize: "0.78rem",
-                color: "var(--muted)",
-                marginTop: 2,
-              }}
-            >
-              {formatDateCzech(todayDate)}
-            </p>
-          </div>
+          <h1
+            style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "1.15rem",
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {restaurant.name}
+          </h1>
           <LogoutButton slug={slug} />
         </div>
 
@@ -146,11 +134,9 @@ export default async function AdminDashboard({ params }: Props) {
         </div>
 
         {/* Collapsible: Nastavení */}
-        <Collapsible title="Nastavení" hint="Telefon, dny, zprávy">
+        <Collapsible title="Nastavení" hint="Dny, zobrazení, zprávy">
           <RestaurantSettings
             initialValues={{
-              phone: restaurant.phone,
-              static_menu_url: restaurant.static_menu_url,
               fallback_type: restaurant.fallback_type,
               fallback_title: restaurant.fallback_title,
               fallback_text: restaurant.fallback_text,
