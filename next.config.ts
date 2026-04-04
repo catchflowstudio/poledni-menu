@@ -55,9 +55,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Landing page a ostatní
-        source: "/((?!api|_next).*)",
+        // HSTS + základní headers pro vše
+        source: "/(.*)",
         headers: [
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],

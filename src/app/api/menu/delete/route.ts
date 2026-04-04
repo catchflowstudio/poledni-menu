@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { verifyCsrf } from "@/lib/security/csrf";
+import { checkRateLimit } from "@/lib/auth/rate-limit";
 import { logMenuDelete, logSecurityEvent } from "@/lib/security/logger";
 
 export async function POST(req: NextRequest) {
@@ -14,6 +15,13 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Nepřihlášen" }, { status: 401 });
+  }
+
+  // Rate limit
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!checkRateLimit(`delete:${session.slug}:${ip}`, 20)) {
+    logSecurityEvent("delete_rate_limited", { slug: session.slug, ip });
+    return NextResponse.json({ error: "Příliš mnoho požadavků." }, { status: 429 });
   }
 
   let body: unknown;

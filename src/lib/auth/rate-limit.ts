@@ -1,5 +1,5 @@
 /**
- * In-memory rate limiter pro login pokusy.
+ * In-memory rate limiter.
  * Dostatečné pro malý single-instance deployment.
  */
 
@@ -10,11 +10,15 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>();
 
-const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 15 * 60 * 1000; // 15 minut
+const DEFAULT_MAX = 5;
+const DEFAULT_WINDOW_MS = 15 * 60 * 1000; // 15 minut
 
 /** Zkontroluje a inkrementuje rate limit. Vrací true pokud je povoleno. */
-export function checkRateLimit(key: string): boolean {
+export function checkRateLimit(
+  key: string,
+  maxAttempts: number = DEFAULT_MAX,
+  windowMs: number = DEFAULT_WINDOW_MS
+): boolean {
   const now = Date.now();
   const entry = store.get(key);
 
@@ -26,11 +30,11 @@ export function checkRateLimit(key: string): boolean {
   const current = store.get(key);
 
   if (!current) {
-    store.set(key, { count: 1, resetAt: now + WINDOW_MS });
+    store.set(key, { count: 1, resetAt: now + windowMs });
     return true;
   }
 
-  if (current.count >= MAX_ATTEMPTS) {
+  if (current.count >= maxAttempts) {
     return false;
   }
 

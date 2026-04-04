@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { getSession } from "@/lib/auth/session";
 import { uploadMenu } from "@/lib/menu/logic";
 import { verifyCsrf } from "@/lib/security/csrf";
+import { checkRateLimit } from "@/lib/auth/rate-limit";
 import { logMenuUpload, logSecurityEvent } from "@/lib/security/logger";
 import {
   MAX_FILE_SIZE,
@@ -26,6 +27,13 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: "Nejste přihlášen." }, { status: 401 });
+    }
+
+    // Rate limit — max 20 uploadů za 15 min na restauraci
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!checkRateLimit(`upload:${session.slug}:${ip}`, 20)) {
+      logSecurityEvent("upload_rate_limited", { slug: session.slug, ip });
+      return NextResponse.json({ error: "Příliš mnoho nahrávání. Zkuste to za chvíli." }, { status: 429 });
     }
 
     // Parsuj form data

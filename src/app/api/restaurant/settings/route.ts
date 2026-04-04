@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { verifyCsrf } from "@/lib/security/csrf";
 import { sanitizeField, sanitizePhone, sanitizeUrl } from "@/lib/security/sanitize";
+import { checkRateLimit } from "@/lib/auth/rate-limit";
 import { logSettingsChange, logSecurityEvent } from "@/lib/security/logger";
 import type { FallbackType } from "@/types";
 
@@ -20,6 +21,13 @@ export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Nepřihlášen" }, { status: 401 });
+  }
+
+  // Rate limit
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!checkRateLimit(`settings:${session.slug}:${ip}`, 10)) {
+    logSecurityEvent("settings_rate_limited", { slug: session.slug, ip });
+    return NextResponse.json({ error: "Příliš mnoho požadavků." }, { status: 429 });
   }
 
   let body: unknown;
