@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import type { SessionPayload } from "@/types";
 
 const COOKIE_NAME = "pm_session";
-const SESSION_DURATION = 24 * 60 * 60; // 24 hodin
+const SESSION_DURATION = 4 * 60 * 60; // 4 hodiny
 const DEMO_SESSION_DURATION = 2 * 60 * 60; // 2 hodiny
 
 function getSecret() {
