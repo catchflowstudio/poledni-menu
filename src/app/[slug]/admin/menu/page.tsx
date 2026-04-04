@@ -45,6 +45,14 @@ export default async function AdminDashboard({ params }: Props) {
   const isDemo = session.isDemo === true;
 
   return (
+    <>
+      {/* Preload menu obrázky — browser začne stahovat hned s HTML */}
+      {todayMenu?.image_url && (
+        <link rel="preload" as="image" href={todayMenu.image_url} />
+      )}
+      {tomorrowMenu?.image_url && (
+        <link rel="preload" as="image" href={tomorrowMenu.image_url} />
+      )}
     <div style={{ minHeight: "100vh", padding: "20px 16px" }}>
       <div className="container" style={{ maxWidth: 520 }}>
         {/* Demo banner */}
@@ -195,5 +203,6 @@ export default async function AdminDashboard({ params }: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 }
