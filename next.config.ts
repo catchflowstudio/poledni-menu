@@ -18,8 +18,8 @@ const nextConfig: NextConfig = {
       supabaseHost = new URL(supabaseUrl).host;
     } catch { /* fallback */ }
 
-    const baseCsp = `default-src 'self'; img-src 'self' https://${supabaseHost}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://${supabaseHost}; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
-    const menuCsp = `default-src 'self'; img-src 'self' https://${supabaseHost}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://${supabaseHost}; base-uri 'self';`;
+    const baseCsp = `default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' https://${supabaseHost}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://${supabaseHost}; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
+    const menuCsp = `default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' https://${supabaseHost}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://${supabaseHost}; base-uri 'self';`;
 
     return [
       {
