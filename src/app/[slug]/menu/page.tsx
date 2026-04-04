@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getRestaurant, getPublicMenuState } from "@/lib/menu/logic";
 import { MenuImage } from "@/components/public/MenuImage";
+import { MenuVisibility } from "@/components/public/MenuVisibility";
 import type { Metadata } from "next";
 
 interface Props {
@@ -62,12 +63,17 @@ export default async function MenuPage({ params }: Props) {
 
   /* ── Menu existuje: fotka v A4 rámci + lightbox ── */
   if (state.type === "menu" && state.menu) {
-    return <MenuImage src={state.menu.image_url} />;
+    return (
+      <>
+        <MenuVisibility visible={true} />
+        <MenuImage src={state.menu.image_url} />
+      </>
+    );
   }
 
-  /* ── Zavřený den → prázdný iframe (sekce zmizí) ── */
+  /* ── Zavřený den → sekce zmizí (i na rodičovské stránce) ── */
   if (state.type === "closed_day") {
-    return <div style={{ display: "none" }} />;
+    return <MenuVisibility visible={false} />;
   }
 
   /* ── Fallback: aktivní den, menu chybí ── */
