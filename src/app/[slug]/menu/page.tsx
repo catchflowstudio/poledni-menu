@@ -65,14 +65,16 @@ export default async function MenuPage({ params }: Props) {
     return <MenuImage src={state.menu.image_url} />;
   }
 
-  /* ── Fallback: zavřený den nebo chybějící menu ── */
+  /* ── Zavřený den → prázdný iframe (sekce zmizí) ── */
+  if (state.type === "closed_day") {
+    return <div style={{ display: "none" }} />;
+  }
+
+  /* ── Fallback: aktivní den, menu chybí ── */
   let message: string;
   let detail: string;
 
-  if (state.type === "closed_day") {
-    message = restaurant.weekend_fallback_title;
-    detail = restaurant.weekend_fallback_text;
-  } else if (restaurant.fallback_type === "phone" && restaurant.phone) {
+  if (restaurant.fallback_type === "phone" && restaurant.phone) {
     message = "Zavolejte si o dnešní nabídku";
     detail = restaurant.phone;
   } else if (restaurant.fallback_type === "static_menu" && restaurant.static_menu_url) {

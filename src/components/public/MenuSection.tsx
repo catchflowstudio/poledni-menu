@@ -13,6 +13,9 @@ export async function MenuSection({ slug }: MenuSectionProps) {
 
   const state = await getPublicMenuState(restaurant);
 
+  // Když se dnes nevaří, celá sekce zmizí
+  if (state.type === "closed_day") return null;
+
   return (
     <section className="section" id="denni-menu">
       <div className="container">
@@ -60,38 +63,6 @@ export async function MenuSection({ slug }: MenuSectionProps) {
             </div>
 
             {/* Zítřejší menu toggle */}
-            {state.tomorrowMenu && (
-              <TomorrowMenuToggle
-                imageUrl={state.tomorrowMenu.image_url}
-                dateLabel={formatDateCzech(state.tomorrowMenu.valid_for_date)}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Stav: den bez poledního menu (víkend / zavřeno) */}
-        {state.type === "closed_day" && (
-          <div className="glass-card slide-up" style={{ padding: "48px 28px", textAlign: "center" }}>
-            <div style={{ fontSize: "1.6rem", marginBottom: 16, opacity: 0.7 }}>☀️</div>
-            <p style={{ fontSize: "1rem", marginBottom: 8, lineHeight: 1.5 }}>
-              {restaurant.weekend_fallback_title}
-            </p>
-            <p style={{ color: "var(--muted)", fontSize: "0.88rem", lineHeight: 1.5 }}>
-              {restaurant.weekend_fallback_text}
-            </p>
-            {restaurant.static_menu_url && (
-              <a
-                href={restaurant.static_menu_url}
-                className="btn btn-secondary"
-                style={{ marginTop: 24 }}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Zobrazit stálé menu
-              </a>
-            )}
-
-            {/* Zítřejší menu i ve volný den */}
             {state.tomorrowMenu && (
               <TomorrowMenuToggle
                 imageUrl={state.tomorrowMenu.image_url}
