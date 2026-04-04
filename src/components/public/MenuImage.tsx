@@ -19,7 +19,6 @@ export function MenuImage({ src, alt = "Polední menu" }: MenuImageProps) {
       title="Kliknutím zvětšit"
       style={{
         width: "100%",
-        aspectRatio: "210 / 297",
         overflow: "hidden",
         lineHeight: 0,
         cursor: "zoom-in",
@@ -30,8 +29,7 @@ export function MenuImage({ src, alt = "Polední menu" }: MenuImageProps) {
         alt={alt}
         style={{
           width: "100%",
-          height: "100%",
-          objectFit: "contain",
+          height: "auto",
           display: "block",
         }}
       />

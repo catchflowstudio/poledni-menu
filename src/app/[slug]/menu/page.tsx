@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getRestaurant, getPublicMenuState } from "@/lib/menu/logic";
 import { formatDateCzech } from "@/lib/date/prague";
 import { MenuImage } from "@/components/public/MenuImage";
-import { MenuVisibility } from "@/components/public/MenuVisibility";
+import { MenuFrameSync } from "@/components/public/MenuFrameSync";
 import type { Metadata } from "next";
 
 interface Props {
@@ -34,7 +34,7 @@ export default async function MenuPage({ params }: Props) {
       <div
         style={{
           width: "100%",
-          aspectRatio: "210 / 297",
+          padding: "48px 16px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -64,22 +64,11 @@ export default async function MenuPage({ params }: Props) {
 
   const dateLabel = formatDateCzech(state.menuDate);
 
-  /* ── Menu existuje: datum + fotka v A4 rámci + lightbox ── */
+  /* ── Menu existuje: fotka + lightbox ── */
   if (state.type === "menu" && state.menu) {
     return (
       <>
-        <MenuVisibility visible={true} />
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: "0.82rem",
-            color: "#888",
-            padding: "8px 0 4px",
-            letterSpacing: "0.02em",
-          }}
-        >
-          {dateLabel}
-        </p>
+        <MenuFrameSync visible={true} menuDate={dateLabel} />
         <MenuImage src={state.menu.image_url} />
       </>
     );
@@ -87,7 +76,7 @@ export default async function MenuPage({ params }: Props) {
 
   /* ── Zavřený den → sekce zmizí (i na rodičovské stránce) ── */
   if (state.type === "closed_day") {
-    return <MenuVisibility visible={false} />;
+    return <MenuFrameSync visible={false} />;
   }
 
   /* ── Fallback: aktivní den, menu chybí ── */
@@ -106,49 +95,52 @@ export default async function MenuPage({ params }: Props) {
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        aspectRatio: "210 / 297",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <>
+      <MenuFrameSync visible={true} menuDate={dateLabel} />
       <div
         style={{
-          textAlign: "center",
-          padding: "24px 32px",
-          borderRadius: 4,
-          background: "rgba(255, 255, 255, 0.82)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-          boxShadow: "0 2px 16px rgba(0, 0, 0, 0.06)",
-          maxWidth: "80%",
+          width: "100%",
+          padding: "48px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        <p
+        <div
           style={{
-            fontSize: "0.95rem",
-            fontWeight: 500,
-            color: "#1a1a1a",
-            marginBottom: 6,
-            letterSpacing: "0.01em",
+            textAlign: "center",
+            padding: "24px 32px",
+            borderRadius: 4,
+            background: "rgba(255, 255, 255, 0.82)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            boxShadow: "0 2px 16px rgba(0, 0, 0, 0.06)",
+            maxWidth: "80%",
           }}
         >
-          {message}
-        </p>
-        <p
-          style={{
-            fontSize: "0.78rem",
-            color: "#666",
-            lineHeight: 1.5,
-          }}
-        >
-          {detail}
-        </p>
+          <p
+            style={{
+              fontSize: "0.95rem",
+              fontWeight: 500,
+              color: "#1a1a1a",
+              marginBottom: 6,
+              letterSpacing: "0.01em",
+            }}
+          >
+            {message}
+          </p>
+          <p
+            style={{
+              fontSize: "0.78rem",
+              color: "#666",
+              lineHeight: 1.5,
+            }}
+          >
+            {detail}
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
