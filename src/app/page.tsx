@@ -1,4 +1,4 @@
-const DEMO_WEB = "/testovaci-restaurace";
+const DEMO_WEB = "https://demomenu.catchflow.cz";
 const DEMO_ADMIN = "/testovaci-restaurace/admin";
 
 const steps = [
@@ -64,7 +64,7 @@ export default function RootPage() {
             bez psaní jídel, bez CMS, bez zbytečností.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href={DEMO_WEB} className="btn btn-primary">
+            <a href={DEMO_WEB} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
               Ukázka webu
             </a>
             <a href={DEMO_ADMIN} className="btn btn-secondary">
