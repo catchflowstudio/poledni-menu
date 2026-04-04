@@ -146,18 +146,27 @@ export async function getDashboardData(
   const today = getTodayPrague();
   const tomorrow = getTomorrowPrague();
 
-  // Všechny dotazy paralelně — restaurant + oba menu najednou
-  const [restaurantResult, todayMenu, tomorrowMenu] = await Promise.all([
+  // Dva paralelní dotazy místo pěti:
+  // 1) restaurant
+  // 2) oba menu najednou (exact match, bez range fallback — admin nepotřebuje)
+  const [restaurantResult, menusResult] = await Promise.all([
     supabase
       .from("restaurants")
       .select(RESTAURANT_COLS)
       .eq("id", restaurantId)
       .single(),
-    getMenuForDate(restaurantId, today),
-    getMenuForDate(restaurantId, tomorrow),
+    supabase
+      .from("menus")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .in("valid_for_date", [today, tomorrow]),
   ]);
 
   if (!restaurantResult.data) return null;
+
+  const menus = (menusResult.data ?? []) as Menu[];
+  const todayMenu = menus.find((m) => m.valid_for_date === today) ?? null;
+  const tomorrowMenu = menus.find((m) => m.valid_for_date === tomorrow) ?? null;
 
   return {
     restaurant: restaurantResult.data as Restaurant,
