@@ -10,7 +10,10 @@ export default function MenuEmbedLayout({
           background: transparent !important;
           margin: 0 !important;
           padding: 0 !important;
-          overflow: hidden !important;
+        }
+        body::before,
+        body::after {
+          display: none !important;
         }
       `}</style>
       {children}
