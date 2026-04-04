@@ -1,5 +1,5 @@
 const DEMO_WEB = "https://demomenu.catchflow.cz";
-const DEMO_ADMIN = "/testovaci-restaurace/admin";
+const DEMO_ADMIN = "/demo";
 
 const steps = [
   {
@@ -83,7 +83,7 @@ export default function RootPage() {
               Ukázka webu
             </a>
             <a href={DEMO_ADMIN} className="btn btn-secondary">
-              Zkusit admin demo
+              Vyzkoušet zdarma
             </a>
           </div>
         </div>

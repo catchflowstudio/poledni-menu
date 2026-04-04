@@ -42,9 +42,40 @@ export default async function AdminDashboard({ params }: Props) {
   const isActiveDay = openingDays.includes(dayOfWeek);
   const showMissingAlert = isActiveDay && todayStatus === "not_uploaded";
 
+  const isDemo = session.isDemo === true;
+
   return (
     <div style={{ minHeight: "100vh", padding: "20px 16px" }}>
       <div className="container" style={{ maxWidth: 520 }}>
+        {/* Demo banner */}
+        {isDemo && (
+          <div
+            style={{
+              padding: "14px 18px",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--gold-dim)",
+              border: "1px solid var(--border-gold)",
+              marginBottom: 0,
+              textAlign: "center",
+            }}
+          >
+            <p style={{ fontSize: "0.88rem", color: "var(--gold)", fontWeight: 600, marginBottom: 4 }}>
+              Toto je demo
+            </p>
+            <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.5 }}>
+              Nahrajte fotku menu a podívejte se, jak se zobrazí na{" "}
+              <a
+                href="https://demomenu.catchflow.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "var(--gold-light)", textDecoration: "underline" }}
+              >
+                demomenu.catchflow.cz
+              </a>
+            </p>
+          </div>
+        )}
+
         {/* Header */}
         <div
           style={{

@@ -32,6 +32,7 @@ export interface Menu {
 export interface SessionPayload {
   restaurantId: string;
   slug: string;
+  isDemo?: boolean;
   exp: number;
 }
 

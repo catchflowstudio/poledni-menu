@@ -4,6 +4,7 @@ import type { SessionPayload } from "@/types";
 
 const COOKIE_NAME = "pm_session";
 const SESSION_DURATION = 24 * 60 * 60; // 24 hodin
+const DEMO_SESSION_DURATION = 2 * 60 * 60; // 2 hodiny
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -16,11 +17,16 @@ function getSecret() {
 /** Vytvoří JWT token pro restauraci */
 export async function createSession(
   restaurantId: string,
-  slug: string
+  slug: string,
+  isDemo?: boolean
 ): Promise<string> {
-  const token = await new SignJWT({ restaurantId, slug })
+  const duration = isDemo ? DEMO_SESSION_DURATION : SESSION_DURATION;
+  const claims: Record<string, unknown> = { restaurantId, slug };
+  if (isDemo) claims.isDemo = true;
+
+  const token = await new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime(`${SESSION_DURATION}s`)
+    .setExpirationTime(`${duration}s`)
     .setIssuedAt()
     .sign(getSecret());
 
@@ -28,13 +34,13 @@ export async function createSession(
 }
 
 /** Nastaví session cookie */
-export async function setSessionCookie(token: string) {
+export async function setSessionCookie(token: string, isDemo?: boolean) {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: SESSION_DURATION,
+    maxAge: isDemo ? DEMO_SESSION_DURATION : SESSION_DURATION,
     path: "/",
   });
 }
