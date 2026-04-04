@@ -2,23 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { getSession } from "@/lib/auth/session";
 import { uploadMenu } from "@/lib/menu/logic";
+import { verifyCsrf } from "@/lib/security/csrf";
+import { logMenuUpload, logSecurityEvent } from "@/lib/security/logger";
 import {
   MAX_FILE_SIZE,
   ALLOWED_MIME_TYPES,
+  ALLOWED_SHARP_FORMATS,
   MAX_IMAGE_WIDTH,
   MAX_IMAGE_HEIGHT,
+  MAX_INPUT_PIXELS,
   WEBP_QUALITY,
 } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
-    // Ověř session
+    // CSRF
+    if (!verifyCsrf(request)) {
+      logSecurityEvent("csrf_rejected", { url: request.url });
+      return NextResponse.json({ error: "Neplatný požadavek." }, { status: 403 });
+    }
+
+    // Session
     const session = await getSession();
     if (!session) {
-      return NextResponse.json(
-        { error: "Nejste přihlášen." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Nejste přihlášen." }, { status: 401 });
     }
 
     // Parsuj form data
@@ -28,82 +35,78 @@ export async function POST(request: NextRequest) {
     const dateTo = formData.get("date_to") as string | null;
 
     if (!file || !date) {
-      return NextResponse.json(
-        { error: "Chybí soubor nebo datum." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Chybí soubor nebo datum." }, { status: 400 });
     }
 
-    // Validace data (YYYY-MM-DD)
+    // Validace data (YYYY-MM-DD) — striktní regex
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return NextResponse.json(
-        { error: "Neplatný formát data." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Neplatný formát data." }, { status: 400 });
     }
 
-    // Validace volitelného data "do"
     if (dateTo && !/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
-      return NextResponse.json(
-        { error: "Neplatný formát data (do)." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Neplatný formát data (do)." }, { status: 400 });
     }
     if (dateTo && dateTo < date) {
-      return NextResponse.json(
-        { error: "Datum 'do' musí být po datu 'od'." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Datum 'do' musí být po datu 'od'." }, { status: 400 });
     }
 
-    // Validace velikosti
+    // Tvrdý limit na velikost
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "Soubor je příliš velký. Maximum je 10 MB." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Soubor je příliš velký. Maximum je 10 MB." }, { status: 400 });
     }
 
-    // Validace MIME typu
+    // Kontrola MIME (první vrstva — klientem deklarovaný typ)
     if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
-      return NextResponse.json(
-        { error: "Povolené formáty: JPG, PNG, WEBP." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Povolené formáty: JPG, PNG, WEBP." }, { status: 400 });
     }
 
     // Přečti soubor do bufferu
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Ověření skutečného typu přes Sharp (ne jen MIME z headeru)
-    let metadata;
+    // ── Skutečné ověření typu souboru přes Sharp metadata ──
+    let metadata: sharp.Metadata;
     try {
       metadata = await sharp(buffer).metadata();
     } catch {
+      logSecurityEvent("invalid_image_upload", {
+        slug: session.slug,
+        declaredMime: file.type,
+        fileSize: file.size,
+      });
+      return NextResponse.json({ error: "Soubor není platný obrázek." }, { status: 400 });
+    }
+
+    // Ověř skutečný formát (ne MIME header, ale binární magic bytes přes Sharp)
+    if (!metadata.format || !ALLOWED_SHARP_FORMATS.includes(metadata.format as (typeof ALLOWED_SHARP_FORMATS)[number])) {
+      logSecurityEvent("format_mismatch", {
+        slug: session.slug,
+        declaredMime: file.type,
+        actualFormat: metadata.format ?? "unknown",
+      });
+      return NextResponse.json({ error: "Soubor není platný obrázek (JPG, PNG, WEBP)." }, { status: 400 });
+    }
+
+    // Tvrdý limit na pixelové rozměry vstupu
+    const inputPixels = (metadata.width ?? 0) * (metadata.height ?? 0);
+    if (inputPixels > MAX_INPUT_PIXELS) {
       return NextResponse.json(
-        { error: "Soubor není platný obrázek." },
+        { error: `Obrázek je příliš velký (max ${Math.round(MAX_INPUT_PIXELS / 1_000_000)} Mpx).` },
         { status: 400 }
       );
     }
 
-    if (!metadata.format || !["jpeg", "png", "webp"].includes(metadata.format)) {
-      return NextResponse.json(
-        { error: "Soubor není platný obrázek (JPG, PNG, WEBP)." },
-        { status: 400 }
-      );
-    }
-
-    // Zpracování obrázku přes Sharp
+    // ── Re-encode přes Sharp — strip EXIF, normalizuj formát ──
     const processedBuffer = await sharp(buffer)
       .resize(MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, {
         fit: "inside",
         withoutEnlargement: true,
       })
+      .rotate() // auto-rotate podle EXIF, pak strip
       .webp({ quality: WEBP_QUALITY })
       .toBuffer();
 
-    // Upload
+    // Upload (session.slug zajišťuje tenant izolaci — cesta je slug/date.webp)
     const result = await uploadMenu(
       session.restaurantId,
       session.slug,
@@ -113,11 +116,10 @@ export async function POST(request: NextRequest) {
     );
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
+
+    logMenuUpload(session.slug, date, session.restaurantId);
 
     return NextResponse.json({
       success: true,

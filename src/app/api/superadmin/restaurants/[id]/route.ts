@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { safeCompare } from "@/lib/security/timing";
 import bcrypt from "bcrypt";
 
 async function checkAuth() {
   const cookieStore = await cookies();
   const token = cookieStore.get("sa_token")?.value;
   const secret = process.env.SUPERADMIN_SECRET;
-  return secret && token === secret;
+  if (!secret || !token) return false;
+  return safeCompare(token, secret);
 }
 
 interface Props {

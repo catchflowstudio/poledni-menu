@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { safeCompare } from "@/lib/security/timing";
+import { logCronCleanup, logSecurityEvent } from "@/lib/security/logger";
 
 /**
  * GET /api/cron/cleanup
  * Maže menu záznamy a soubory starší než 60 dní.
  * Voláno automaticky Vercel Cronem každý den ve 3:00 CET.
- * Chráněno CRON_SECRET hlavičkou.
+ * Chráněno CRON_SECRET hlavičkou (timing-safe).
  */
 export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization");
+  const authHeader = req.headers.get("authorization") ?? "";
   const cronSecret = process.env.CRON_SECRET;
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || !safeCompare(authHeader, `Bearer ${cronSecret}`)) {
+    logSecurityEvent("cron_unauthorized", {
+      ip: req.headers.get("x-forwarded-for") ?? "unknown",
+    });
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -60,6 +65,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
   }
 
-  console.log(`Cleanup: smazáno ${oldMenus.length} menu starších než ${cutoffDate}`);
+  logCronCleanup(oldMenus.length, cutoffDate);
   return NextResponse.json({ deleted: oldMenus.length, cutoffDate });
 }

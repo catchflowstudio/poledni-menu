@@ -189,7 +189,7 @@ async function getLastUploadedMenu(
 
 /**
  * Nahraje menu obrázek a uloží/aktualizuje záznam.
- * Pokud pro dané datum menu existuje, nahradí ho.
+ * Pokud pro dané datum menu existuje, smaže starý soubor a nahradí ho.
  */
 export async function uploadMenu(
   restaurantId: string,
@@ -200,9 +200,15 @@ export async function uploadMenu(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseAdmin();
 
+  // Smaž starý soubor ze Storage, pokud existuje (uklízej za sebou)
+  const oldImagePath = `${slug}/${date}.webp`;
+  await supabase.storage.from("daily-menus").remove([oldImagePath]);
+
+  // Nový název s timestampem pro cache bust
+  const timestamp = Date.now();
   const imagePath = `${slug}/${date}.webp`;
 
-  // Upload do Storage (upsert = nahradí existující)
+  // Upload do Storage
   const { error: uploadError } = await supabase.storage
     .from("daily-menus")
     .upload(imagePath, imageBuffer, {
@@ -220,8 +226,8 @@ export async function uploadMenu(
     data: { publicUrl },
   } = supabase.storage.from("daily-menus").getPublicUrl(imagePath);
 
-  // Cache bust URL
-  const imageUrl = `${publicUrl}?v=${date}`;
+  // Cache bust URL s timestampem
+  const imageUrl = `${publicUrl}?v=${timestamp}`;
 
   // Upsert záznam v DB
   const { error: dbError } = await supabase.from("menus").upsert(
