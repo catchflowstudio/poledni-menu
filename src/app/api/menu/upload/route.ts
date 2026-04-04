@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const date = formData.get("date") as string | null;
+    const dateTo = formData.get("date_to") as string | null;
 
     if (!file || !date) {
       return NextResponse.json(
@@ -37,6 +38,20 @@ export async function POST(request: NextRequest) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json(
         { error: "Neplatný formát data." },
+        { status: 400 }
+      );
+    }
+
+    // Validace volitelného data "do"
+    if (dateTo && !/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
+      return NextResponse.json(
+        { error: "Neplatný formát data (do)." },
+        { status: 400 }
+      );
+    }
+    if (dateTo && dateTo < date) {
+      return NextResponse.json(
+        { error: "Datum 'do' musí být po datu 'od'." },
         { status: 400 }
       );
     }
@@ -93,7 +108,8 @@ export async function POST(request: NextRequest) {
       session.restaurantId,
       session.slug,
       date,
-      processedBuffer
+      processedBuffer,
+      dateTo || undefined
     );
 
     if (!result.success) {

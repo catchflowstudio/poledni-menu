@@ -9,8 +9,14 @@ interface Restaurant {
   name: string;
   phone: string | null;
   serves_weekend: boolean;
+  fallback_type: string;
+  opening_days: number[];
+  menu_active_from: string;
   created_at: string;
   lastMenuDate: string | null;
+  todayUploaded: boolean;
+  tomorrowUploaded: boolean;
+  daysInactive: number | null;
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -77,7 +83,7 @@ export function SuperadminDashboard() {
       body: JSON.stringify({ password: resetPwd }),
     });
     const data = await res.json();
-    setResetMsg(res.ok ? "✓ Heslo změněno" : data.error);
+    setResetMsg(res.ok ? "Heslo bylo změněno." : data.error);
     if (res.ok) { setResetPwd(""); setTimeout(() => { setResetId(null); setResetMsg(""); }, 1500); }
   }
 
@@ -85,6 +91,12 @@ export function SuperadminDashboard() {
     await fetch("/api/superadmin/auth", { method: "DELETE" });
     router.push("/superadmin/login");
   }
+
+  // Stats
+  const totalRestaurants = restaurants.length;
+  const todayUploaded = restaurants.filter((r) => r.todayUploaded).length;
+  const todayMissing = totalRestaurants - todayUploaded;
+  const inactive = restaurants.filter((r) => r.daysInactive !== null && r.daysInactive > 7).length;
 
   const tdStyle: React.CSSProperties = {
     padding: "12px 16px",
@@ -98,15 +110,60 @@ export function SuperadminDashboard() {
       <div className="container container--wide">
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
           <div>
-            <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.8rem" }}>Lístek</h1>
+            <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.8rem" }}>Polední menu</h1>
             <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: 4 }}>Superadmin panel</p>
           </div>
           <button onClick={logout} className="btn btn-ghost" style={{ fontSize: "0.8rem" }}>
             Odhlásit
           </button>
         </div>
+
+        {/* Přehled — karty */}
+        {!loading && totalRestaurants > 0 && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              gap: 12,
+              marginBottom: 32,
+            }}
+          >
+            <div className="glass-card" style={{ padding: "16px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--ivory)" }}>
+                {totalRestaurants}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
+                Restaurací
+              </div>
+            </div>
+            <div className="glass-card" style={{ padding: "16px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "#22c55e" }}>
+                {todayUploaded}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
+                Dnes nahráno
+              </div>
+            </div>
+            <div className="glass-card" style={{ padding: "16px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: todayMissing > 0 ? "#f59e0b" : "var(--muted)" }}>
+                {todayMissing}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
+                Dnes chybí
+              </div>
+            </div>
+            <div className="glass-card" style={{ padding: "16px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: inactive > 0 ? "#ef4444" : "var(--muted)" }}>
+                {inactive}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
+                Neaktivních (7+ dní)
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabulka restaurací */}
         <div className="glass-card" style={{ marginBottom: 40, overflow: "hidden" }}>
@@ -125,7 +182,7 @@ export function SuperadminDashboard() {
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "rgba(0,0,0,0.15)" }}>
-                    {["Název", "Slug", "Telefon", "Poslední menu", "Vytvořena", "Akce"].map((h) => (
+                    {["Název", "Dnes", "Zítra", "Poslední menu", "Aktivita", "Akce"].map((h) => (
                       <th key={h} style={{ ...tdStyle, color: "var(--muted)", fontWeight: 500, textAlign: "left" }}>
                         {h}
                       </th>
@@ -137,33 +194,66 @@ export function SuperadminDashboard() {
                     <tr key={r.id}>
                       <td style={tdStyle}>
                         <div style={{ fontWeight: 500 }}>{r.name}</div>
+                        <div style={{ fontSize: "0.75rem", marginTop: 2, color: "var(--dim)" }}>
+                          {r.slug}
+                          {r.phone && ` · ${r.phone}`}
+                        </div>
                         <div style={{ fontSize: "0.75rem", marginTop: 2 }}>
                           <a href={`/${r.slug}/admin`} target="_blank" rel="noopener noreferrer"
                             style={{ color: "var(--gold)" }}>
-                            Admin ↗
+                            Admin
                           </a>
                           {" · "}
                           <a href={`/${r.slug}/menu`} target="_blank" rel="noopener noreferrer"
                             style={{ color: "var(--muted)" }}>
-                            Menu ↗
+                            Menu
                           </a>
                         </div>
                       </td>
-                      <td style={{ ...tdStyle, fontFamily: "monospace", color: "var(--muted)" }}>
-                        {r.slug}
+                      <td style={tdStyle}>
+                        <span style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: "0.82rem",
+                        }}>
+                          <span style={{
+                            width: 8, height: 8, borderRadius: "50%",
+                            background: r.todayUploaded ? "#22c55e" : "rgba(245,158,11,0.6)",
+                            display: "inline-block",
+                          }} />
+                          {r.todayUploaded ? "Ano" : "Ne"}
+                        </span>
                       </td>
-                      <td style={{ ...tdStyle, color: "var(--muted)" }}>
-                        {r.phone ?? "—"}
+                      <td style={tdStyle}>
+                        <span style={{
+                          fontSize: "0.82rem",
+                          color: r.tomorrowUploaded ? "var(--ivory)" : "var(--dim)",
+                        }}>
+                          {r.tomorrowUploaded ? "Ano" : "Ne"}
+                        </span>
                       </td>
                       <td style={tdStyle}>
                         {r.lastMenuDate ? (
-                          <span style={{ color: "#22c55e" }}>{r.lastMenuDate}</span>
+                          <span style={{ color: "var(--ivory)", fontSize: "0.82rem" }}>
+                            {r.lastMenuDate}
+                          </span>
                         ) : (
-                          <span style={{ color: "var(--dim)" }}>Žádné</span>
+                          <span style={{ color: "var(--dim)", fontSize: "0.82rem" }}>Žádné</span>
                         )}
                       </td>
-                      <td style={{ ...tdStyle, color: "var(--muted)", fontSize: "0.8rem" }}>
-                        {new Date(r.created_at).toLocaleDateString("cs-CZ")}
+                      <td style={tdStyle}>
+                        {r.daysInactive === null ? (
+                          <span style={{ color: "var(--dim)", fontSize: "0.82rem" }}>—</span>
+                        ) : r.daysInactive === 0 ? (
+                          <span style={{ color: "#22c55e", fontSize: "0.82rem" }}>Aktivní</span>
+                        ) : r.daysInactive <= 3 ? (
+                          <span style={{ color: "var(--ivory)", fontSize: "0.82rem" }}>{r.daysInactive}d</span>
+                        ) : r.daysInactive <= 7 ? (
+                          <span style={{ color: "#f59e0b", fontSize: "0.82rem" }}>{r.daysInactive}d</span>
+                        ) : (
+                          <span style={{ color: "#ef4444", fontSize: "0.82rem" }}>{r.daysInactive}d</span>
+                        )}
                       </td>
                       <td style={tdStyle}>
                         <div style={{ display: "flex", gap: 8 }}>
@@ -216,7 +306,7 @@ export function SuperadminDashboard() {
                   required
                   autoFocus
                 />
-                {resetMsg && <p style={{ color: resetMsg.startsWith("✓") ? "#86efac" : "#fca5a5", fontSize: "0.85rem" }}>{resetMsg}</p>}
+                {resetMsg && <p style={{ color: resetMsg.startsWith("Heslo") ? "#86efac" : "#fca5a5", fontSize: "0.85rem" }}>{resetMsg}</p>}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Uložit</button>
                   <button type="button" className="btn btn-ghost" onClick={() => setResetId(null)}>Zrušit</button>

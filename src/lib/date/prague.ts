@@ -41,6 +41,20 @@ export function isWeekdayPrague(): boolean {
   return !isWeekendPrague();
 }
 
+/** Vrátí aktuální čas v Prague timezone jako "HH:mm" */
+export function getPragueTime(): string {
+  return new Date().toLocaleTimeString("sv-SE", {
+    timeZone: TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Je aktuální Prague čas >= zadaný čas? (formát "HH:mm") */
+export function isPastTimePrague(time: string): boolean {
+  return getPragueTime() >= time;
+}
+
 /** Formátuje YYYY-MM-DD na české datum (např. "28. března 2026") */
 export function formatDateCzech(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);

@@ -4,27 +4,43 @@ const DEMO_ADMIN = "/testovaci-restaurace/admin";
 const steps = [
   {
     n: "1",
-    title: "Nafotíš lístek",
-    text: "Vyfotíš denní menu — papírový lístek, tabuli, cokoliv. Nahraješ přes admin za 30 sekund.",
+    title: "Vyfotíte menu",
+    text: "Papírový lístek, tabuli, cokoliv. Nahrajete přes admin jedním kliknutím.",
   },
   {
     n: "2",
-    title: "Systém ho zpracuje",
-    text: "Fotka se převede do WebP, uloží s datem platnosti. Zítřejší menu nahraješ dnes, zobrazí se ve správný den.",
+    title: "Zobrazí se na webu",
+    text: "Menu se ukáže na webu restaurace ve správný den. Zítra? Nahrajte večer, zobrazí se ráno.",
   },
   {
     n: "3",
-    title: "Zákazníci to vidí",
-    text: "Menu se embed přes jeden řádek kódu na web restaurace. Formát A4, bez zbytečností, vypadá jako součást webu.",
+    title: "Staré zmizí samo",
+    text: "Nikdy se nezobrazí včerejší menu. Systém řeší víkendy, svátky i dny bez menu.",
   },
 ];
 
-const features = [
-  { label: "Formát A4", desc: "Přesný poměr stran" },
+const selling = [
+  {
+    title: "Žádné vypisování jídel",
+    text: "Nemusíte nic přepisovat do administrace. Stačí fotka.",
+  },
+  {
+    title: "Vždy aktuální",
+    text: "Nikdy se na webu neukáže staré menu z jiného dne.",
+  },
+  {
+    title: "Funguje dopředu",
+    text: "Nahrajete menu v 22:00 na další den — zobrazí se ve správný čas.",
+  },
+];
+
+const details = [
+  { label: "Formát A4", desc: "Přesný poměr stran fotky" },
   { label: "Průhledné pozadí", desc: "Sedí na každý web" },
   { label: "Bez hesla pro hosty", desc: "Jen admin potřebuje login" },
   { label: "Správné datum", desc: "Zobrazí se ve správný den" },
-  { label: "Víkendový režim", desc: "Vypínatelné polední menu" },
+  { label: "Víkendový režim", desc: "Vlastní zpráva pro dny bez menu" },
+  { label: "Nastavitelné fallbacky", desc: "Text, telefon, odkaz na stálé menu" },
 ];
 
 export default function RootPage() {
@@ -32,9 +48,9 @@ export default function RootPage() {
     <main>
       {/* ── Hero ── */}
       <section className="page-center" style={{ minHeight: "60vh", paddingTop: 80 }}>
-        <div style={{ textAlign: "center", maxWidth: 540 }}>
+        <div style={{ textAlign: "center", maxWidth: 560 }}>
           <span className="badge" style={{ marginBottom: 28 }}>
-            Micro-SaaS pro restaurace
+            Pro restaurace a bistra
           </span>
           <h1
             style={{
@@ -44,24 +60,23 @@ export default function RootPage() {
               letterSpacing: "-0.02em",
             }}
           >
-            Polední menu online
+            Denní menu na webu
             <br />
-            <span style={{ color: "var(--gold)" }}>za 30 sekund</span>
+            <span style={{ color: "var(--gold)" }}>bez přepisování</span>
           </h1>
           <p
             style={{
               color: "var(--muted)",
-              fontSize: "1.02rem",
+              fontSize: "1.05rem",
               lineHeight: 1.7,
               marginBottom: 40,
-              maxWidth: 460,
+              maxWidth: 480,
               margin: "0 auto 40px",
             }}
           >
-            Nafotíš lístek, nahraješ fotku. Hotovo.
+            Vyfotíte menu, nahrajete fotku. Hotovo.
             <br />
-            Systém ji zobrazí na webu restaurace ve formátu A4 —
-            bez psaní jídel, bez CMS, bez zbytečností.
+            Na webu restaurace se ukáže automaticky ve správný den.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={DEMO_WEB} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
@@ -74,8 +89,67 @@ export default function RootPage() {
         </div>
       </section>
 
+      {/* ── Proč to funguje ── */}
+      <section className="section" style={{ paddingBottom: 60 }}>
+        <div className="container container--wide">
+          <p
+            className="badge"
+            style={{ display: "block", textAlign: "center", marginBottom: 16 }}
+          >
+            Proč to funguje
+          </p>
+          <h2
+            style={{
+              textAlign: "center",
+              fontSize: "clamp(1.4rem, 3vw, 2rem)",
+              marginBottom: 48,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Tři věci, které řeší
+          </h2>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {selling.map((s, i) => (
+              <div
+                key={i}
+                className="glass-card"
+                style={{ padding: "28px 24px" }}
+              >
+                <h3
+                  style={{
+                    fontSize: "1.02rem",
+                    fontWeight: 700,
+                    marginBottom: 8,
+                    color: "var(--ivory)",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {s.title}
+                </h3>
+                <p
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: "0.88rem",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {s.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Jak to funguje ── */}
-      <section className="section" style={{ paddingBottom: 100 }}>
+      <section className="section" style={{ paddingBottom: 60 }}>
         <div className="container container--wide">
           <p
             className="badge"
@@ -150,7 +224,7 @@ export default function RootPage() {
             ))}
           </div>
 
-          {/* ── Bonus detaily ── */}
+          {/* ── Detaily ── */}
           <div
             className="glass-card"
             style={{
@@ -161,7 +235,7 @@ export default function RootPage() {
               gap: 20,
             }}
           >
-            {features.map((f) => (
+            {details.map((f) => (
               <div key={f.label} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <div
                   style={{
@@ -184,6 +258,54 @@ export default function RootPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Integrace ── */}
+      <section className="section" style={{ paddingBottom: 100 }}>
+        <div className="container" style={{ maxWidth: 560 }}>
+          <p
+            className="badge"
+            style={{ display: "block", textAlign: "center", marginBottom: 16 }}
+          >
+            Integrace
+          </p>
+          <h2
+            style={{
+              textAlign: "center",
+              fontSize: "clamp(1.4rem, 3vw, 2rem)",
+              marginBottom: 20,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Jeden řádek kódu na váš web
+          </h2>
+          <p
+            style={{
+              textAlign: "center",
+              color: "var(--muted)",
+              fontSize: "0.9rem",
+              lineHeight: 1.6,
+              marginBottom: 32,
+            }}
+          >
+            Vložíte iframe na web restaurace a menu se tam zobrazí automaticky.
+            Žádné pluginy, žádné nastavování.
+          </p>
+          <div
+            className="glass-card"
+            style={{
+              padding: "20px 24px",
+              fontFamily: "monospace",
+              fontSize: "0.78rem",
+              color: "var(--muted)",
+              lineHeight: 1.6,
+              overflowX: "auto",
+              border: "1px solid var(--border)",
+            }}
+          >
+            {`<iframe src="https://menu.catchflow.cz/vase-restaurace/menu" style="width:100%;height:800px;border:none"></iframe>`}
           </div>
         </div>
       </section>

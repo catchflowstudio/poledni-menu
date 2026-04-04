@@ -25,7 +25,7 @@ export default async function MenuPage({ params }: Props) {
   try {
     restaurant = await getRestaurant(slug);
     if (!restaurant) notFound();
-    state = await getPublicMenuState(restaurant.id, restaurant.serves_weekend);
+    state = await getPublicMenuState(restaurant);
   } catch {
     // Supabase nebo síťová chyba — zobraz neutrální fallback
     return (
@@ -65,16 +65,23 @@ export default async function MenuPage({ params }: Props) {
     return <MenuImage src={state.menu.image_url} />;
   }
 
-  /* ── Fallback: víkend nebo chybějící menu ── */
-  const message =
-    state.type === "weekend"
-      ? restaurant.weekend_fallback_title
-      : "Dnešní menu připravujeme";
+  /* ── Fallback: zavřený den nebo chybějící menu ── */
+  let message: string;
+  let detail: string;
 
-  const detail =
-    state.type === "weekend"
-      ? restaurant.weekend_fallback_text
-      : "Zkuste to prosím znovu po 11:00";
+  if (state.type === "closed_day") {
+    message = restaurant.weekend_fallback_title;
+    detail = restaurant.weekend_fallback_text;
+  } else if (restaurant.fallback_type === "phone" && restaurant.phone) {
+    message = "Zavolejte si o dnešní nabídku";
+    detail = restaurant.phone;
+  } else if (restaurant.fallback_type === "static_menu" && restaurant.static_menu_url) {
+    message = "Podívejte se na naše stálé menu";
+    detail = restaurant.static_menu_url;
+  } else {
+    message = restaurant.fallback_title;
+    detail = restaurant.fallback_text;
+  }
 
   return (
     <div
@@ -86,7 +93,6 @@ export default async function MenuPage({ params }: Props) {
         justifyContent: "center",
       }}
     >
-      {/* Karta funguje na světlém i tmavém pozadí */}
       <div
         style={{
           textAlign: "center",

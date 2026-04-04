@@ -4,7 +4,7 @@ import { getDashboardData } from "@/lib/menu/logic";
 import { getTodayPrague, formatDateCzech } from "@/lib/date/prague";
 import { UploadForm } from "@/components/admin/UploadForm";
 import { LogoutButton } from "@/components/admin/LogoutButton";
-import { WeekendToggle } from "@/components/admin/WeekendToggle";
+import { RestaurantSettings } from "@/components/admin/RestaurantSettings";
 import { EmbedSnippet } from "@/components/admin/EmbedSnippet";
 
 interface Props {
@@ -24,7 +24,7 @@ export default async function AdminDashboard({ params }: Props) {
   const dashboard = await getDashboardData(session.restaurantId);
   if (!dashboard) redirect(`/${slug}/admin/login`);
 
-  const { restaurant, todayStatus, tomorrowStatus, lastMenu } = dashboard;
+  const { restaurant, todayStatus, tomorrowStatus, todayMenu, tomorrowMenu, lastMenu } = dashboard;
   const todayDate = getTodayPrague();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
@@ -106,6 +106,49 @@ export default async function AdminDashboard({ params }: Props) {
           </div>
         </div>
 
+        {/* Dnešní menu náhled */}
+        {todayMenu && (
+          <div className="glass-card" style={{ padding: "20px 22px", marginBottom: 20 }}>
+            <p className="section-label" style={{ marginBottom: 12 }}>
+              Dnešní menu
+            </p>
+            <img
+              src={todayMenu.image_url}
+              alt="Dnešní menu"
+              style={{
+                width: "100%",
+                borderRadius: "var(--radius-sm)",
+                marginBottom: 8,
+              }}
+            />
+            <p style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+              {formatDateCzech(todayMenu.valid_for_date)}
+            </p>
+          </div>
+        )}
+
+        {/* Zítřejší menu náhled */}
+        {tomorrowMenu && (
+          <div className="glass-card" style={{ padding: "20px 22px", marginBottom: 20 }}>
+            <p className="section-label" style={{ marginBottom: 12 }}>
+              Zítřejší menu
+            </p>
+            <img
+              src={tomorrowMenu.image_url}
+              alt="Zítřejší menu"
+              style={{
+                width: "100%",
+                borderRadius: "var(--radius-sm)",
+                marginBottom: 8,
+                opacity: 0.85,
+              }}
+            />
+            <p style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+              {formatDateCzech(tomorrowMenu.valid_for_date)}
+            </p>
+          </div>
+        )}
+
         {/* Upload section */}
         <div className="glass-card" style={{ padding: "24px 22px", marginBottom: 20 }}>
           <h2
@@ -133,8 +176,8 @@ export default async function AdminDashboard({ params }: Props) {
           <UploadForm slug={slug} todayDate={todayDate} />
         </div>
 
-        {/* Poslední nahrané menu */}
-        {lastMenu && (
+        {/* Poslední nahrané menu (jen pokud se liší od dnešního a zítřejšího) */}
+        {lastMenu && lastMenu.valid_for_date !== todayMenu?.valid_for_date && lastMenu.valid_for_date !== tomorrowMenu?.valid_for_date && (
           <div className="glass-card" style={{ padding: "20px 22px", marginBottom: 20 }}>
             <p className="section-label" style={{ marginBottom: 12 }}>
               Poslední nahrané menu
@@ -155,11 +198,33 @@ export default async function AdminDashboard({ params }: Props) {
         )}
 
         {/* Nastavení */}
-        <div className="glass-card" style={{ padding: "20px 22px", marginBottom: 20 }}>
-          <p className="section-label" style={{ marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: "24px 22px", marginBottom: 20 }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "1.05rem",
+              fontWeight: 600,
+              marginBottom: 20,
+              letterSpacing: "-0.01em",
+            }}
+          >
             Nastavení
-          </p>
-          <WeekendToggle initialValue={restaurant.serves_weekend} />
+          </h2>
+          <RestaurantSettings
+            initialValues={{
+              name: restaurant.name,
+              phone: restaurant.phone,
+              static_menu_url: restaurant.static_menu_url,
+              serves_weekend: restaurant.serves_weekend,
+              fallback_type: restaurant.fallback_type,
+              fallback_title: restaurant.fallback_title,
+              fallback_text: restaurant.fallback_text,
+              weekend_fallback_title: restaurant.weekend_fallback_title,
+              weekend_fallback_text: restaurant.weekend_fallback_text,
+              opening_days: restaurant.opening_days,
+              menu_active_from: restaurant.menu_active_from,
+            }}
+          />
         </div>
 
         {/* Embed na váš web */}
@@ -182,16 +247,7 @@ export default async function AdminDashboard({ params }: Props) {
             rel="noopener noreferrer"
             style={{ flex: 1, textAlign: "center", minWidth: 150 }}
           >
-            Otevřít veřejné menu ↗
-          </a>
-          <a
-            href={`/${slug}`}
-            className="btn btn-ghost"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ flex: 1, textAlign: "center", minWidth: 150 }}
-          >
-            Web restaurace ↗
+            Otevřít veřejné menu
           </a>
         </div>
 

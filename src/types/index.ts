@@ -1,3 +1,5 @@
+export type FallbackType = "text" | "static_menu" | "phone";
+
 export interface Restaurant {
   id: string;
   slug: string;
@@ -8,6 +10,11 @@ export interface Restaurant {
   weekend_fallback_title: string;
   weekend_fallback_text: string;
   serves_weekend: boolean;
+  fallback_type: FallbackType;
+  fallback_title: string;
+  fallback_text: string;
+  opening_days: number[]; // 0=ne, 1=po, ..., 6=so
+  menu_active_from: string; // "HH:mm"
   created_at: string;
 }
 
@@ -15,6 +22,7 @@ export interface Menu {
   id: string;
   restaurant_id: string;
   valid_for_date: string; // YYYY-MM-DD
+  valid_to_date: string | null; // YYYY-MM-DD, nullable
   image_path: string;
   image_url: string;
   uploaded_at: string;

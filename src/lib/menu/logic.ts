@@ -3,9 +3,14 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   getTodayPrague,
   getTomorrowPrague,
-  isWeekendPrague,
+  getPragueDayOfWeek,
+  isPastTimePrague,
 } from "@/lib/date/prague";
-import type { Menu, Restaurant, DashboardData, MenuStatus } from "@/types";
+import type { Menu, Restaurant, DashboardData } from "@/types";
+
+/** Sloupce restaurace bez password_hash */
+const RESTAURANT_COLS =
+  "id, slug, name, phone, static_menu_url, weekend_fallback_title, weekend_fallback_text, serves_weekend, fallback_type, fallback_title, fallback_text, opening_days, menu_active_from, created_at";
 
 /** Najde restauraci podle slugu (bez password_hash) */
 export async function getRestaurant(
@@ -14,25 +19,44 @@ export async function getRestaurant(
   const supabase = getSupabasePublic();
   const { data } = await supabase
     .from("restaurants")
-    .select("id, slug, name, phone, static_menu_url, weekend_fallback_title, weekend_fallback_text, serves_weekend, created_at")
+    .select(RESTAURANT_COLS)
     .eq("slug", slug)
     .single();
   return data as Restaurant | null;
 }
 
-/** Vrátí menu pro konkrétní datum a restauraci */
+/**
+ * Vrátí menu pro konkrétní datum a restauraci.
+ * Podporuje date range: najde menu kde datum spadá do valid_for_date..valid_to_date.
+ */
 export async function getMenuForDate(
   restaurantId: string,
   date: string
 ): Promise<Menu | null> {
   const supabase = getSupabasePublic();
-  const { data } = await supabase
+
+  // Nejdřív zkus přesný match (nejčastější případ)
+  const { data: exact } = await supabase
     .from("menus")
     .select("*")
     .eq("restaurant_id", restaurantId)
     .eq("valid_for_date", date)
     .single();
-  return data;
+
+  if (exact) return exact;
+
+  // Pokud ne, zkus date range (valid_for_date <= date <= valid_to_date)
+  const { data: range } = await supabase
+    .from("menus")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .lte("valid_for_date", date)
+    .gte("valid_to_date", date)
+    .order("valid_for_date", { ascending: false })
+    .limit(1)
+    .single();
+
+  return range ?? null;
 }
 
 /** Vrátí dnešní menu pro veřejnou část */
@@ -43,27 +67,52 @@ export async function getTodayMenu(
   return getMenuForDate(restaurantId, today);
 }
 
+/** Vrátí zítřejší menu */
+export async function getTomorrowMenu(
+  restaurantId: string
+): Promise<Menu | null> {
+  const tomorrow = getTomorrowPrague();
+  return getMenuForDate(restaurantId, tomorrow);
+}
+
 /**
  * Určí stav zobrazení pro veřejnou část.
- * Pokud servesWeekend=true, zobrazí menu i o víkendu.
+ * Respektuje opening_days a menu_active_from.
  */
 export async function getPublicMenuState(
-  restaurantId: string,
-  servesWeekend: boolean = false
+  restaurant: Restaurant
 ): Promise<{
-  type: "menu" | "weekend" | "no_menu";
+  type: "menu" | "closed_day" | "no_menu";
   menu: Menu | null;
+  tomorrowMenu: Menu | null;
 }> {
-  if (isWeekendPrague() && !servesWeekend) {
-    return { type: "weekend", menu: null };
+  const dayOfWeek = getPragueDayOfWeek();
+  const openingDays = restaurant.opening_days ?? [1, 2, 3, 4, 5];
+
+  // Pokud dnes není "otevírací den" pro polední menu
+  if (!openingDays.includes(dayOfWeek)) {
+    // Ale pokud serves_weekend je true a je víkend, pokračuj normálně
+    if (!restaurant.serves_weekend) {
+      const tomorrowMenu = await getTomorrowMenu(restaurant.id);
+      return { type: "closed_day", menu: null, tomorrowMenu };
+    }
   }
 
-  const menu = await getTodayMenu(restaurantId);
+  // Zkontroluj menu_active_from — pokud je nastaveno a ještě nenastal čas
+  const activeFrom = restaurant.menu_active_from ?? "00:00";
+  if (activeFrom !== "00:00" && !isPastTimePrague(activeFrom)) {
+    const tomorrowMenu = await getTomorrowMenu(restaurant.id);
+    return { type: "no_menu", menu: null, tomorrowMenu };
+  }
+
+  const menu = await getTodayMenu(restaurant.id);
+  const tomorrowMenu = await getTomorrowMenu(restaurant.id);
+
   if (menu) {
-    return { type: "menu", menu };
+    return { type: "menu", menu, tomorrowMenu };
   }
 
-  return { type: "no_menu", menu: null };
+  return { type: "no_menu", menu: null, tomorrowMenu };
 }
 
 /** Vrátí data pro admin dashboard */
@@ -74,7 +123,7 @@ export async function getDashboardData(
 
   const { data: restaurant } = await supabase
     .from("restaurants")
-    .select("id, slug, name, phone, static_menu_url, weekend_fallback_title, weekend_fallback_text, serves_weekend, created_at")
+    .select(RESTAURANT_COLS)
     .eq("id", restaurantId)
     .single();
 
@@ -123,7 +172,8 @@ export async function uploadMenu(
   restaurantId: string,
   slug: string,
   date: string,
-  imageBuffer: Buffer
+  imageBuffer: Buffer,
+  validToDate?: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseAdmin();
 
@@ -147,7 +197,7 @@ export async function uploadMenu(
     data: { publicUrl },
   } = supabase.storage.from("daily-menus").getPublicUrl(imagePath);
 
-  // Cache bust URL — použijeme datum místo timestamp, aby byl URL stabilní
+  // Cache bust URL
   const imageUrl = `${publicUrl}?v=${date}`;
 
   // Upsert záznam v DB
@@ -155,6 +205,7 @@ export async function uploadMenu(
     {
       restaurant_id: restaurantId,
       valid_for_date: date,
+      valid_to_date: validToDate || null,
       image_path: imagePath,
       image_url: imageUrl,
       uploaded_at: new Date().toISOString(),

@@ -39,11 +39,16 @@ export async function PATCH(req: Request, { params }: Props) {
     return NextResponse.json({ ok: true, message: "Heslo bylo změněno." });
   }
 
-  // Update ostatních polí (name, phone, serves_weekend)
+  // Update ostatních polí
   const allowed: Record<string, unknown> = {};
   if (typeof body.name === "string") allowed.name = body.name;
   if (typeof body.phone === "string") allowed.phone = body.phone || null;
   if (typeof body.serves_weekend === "boolean") allowed.serves_weekend = body.serves_weekend;
+  if (typeof body.fallback_type === "string") allowed.fallback_type = body.fallback_type;
+  if (typeof body.fallback_title === "string") allowed.fallback_title = body.fallback_title;
+  if (typeof body.fallback_text === "string") allowed.fallback_text = body.fallback_text;
+  if (Array.isArray(body.opening_days)) allowed.opening_days = body.opening_days;
+  if (typeof body.menu_active_from === "string") allowed.menu_active_from = body.menu_active_from;
 
   const { error } = await supabase.from("restaurants").update(allowed).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

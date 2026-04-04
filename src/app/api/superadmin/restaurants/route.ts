@@ -19,31 +19,63 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("restaurants")
-    .select("id, slug, name, phone, serves_weekend, created_at")
+    .select("id, slug, name, phone, serves_weekend, fallback_type, opening_days, menu_active_from, created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Přidej datum posledního nahraného menu
+  // Přidej datum posledního nahraného menu + today/tomorrow status
   const { data: menus } = await supabase
     .from("menus")
-    .select("restaurant_id, valid_for_date")
+    .select("restaurant_id, valid_for_date, uploaded_at")
     .order("valid_for_date", { ascending: false });
 
-  const lastMenuByRestaurant = (menus ?? []).reduce<Record<string, string>>(
-    (acc, m) => {
-      if (!acc[m.restaurant_id]) acc[m.restaurant_id] = m.valid_for_date;
-      return acc;
-    },
-    {}
-  );
+  // Spočítej dnešní a zítřejší datum (Prague timezone)
+  const now = new Date();
+  const pragueNow = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Prague" }));
+  const today = pragueNow.toISOString().split("T")[0];
+  const pragueNowTomorrow = new Date(pragueNow);
+  pragueNowTomorrow.setDate(pragueNowTomorrow.getDate() + 1);
+  const tomorrow = pragueNowTomorrow.toISOString().split("T")[0];
 
-  const enriched = (data ?? []).map((r) => ({
-    ...r,
-    lastMenuDate: lastMenuByRestaurant[r.id] ?? null,
-  }));
+  const menusByRestaurant: Record<string, { last: string; dates: Set<string>; lastUpload: string }> = {};
+  for (const m of menus ?? []) {
+    if (!menusByRestaurant[m.restaurant_id]) {
+      menusByRestaurant[m.restaurant_id] = {
+        last: m.valid_for_date,
+        dates: new Set(),
+        lastUpload: m.uploaded_at,
+      };
+    }
+    menusByRestaurant[m.restaurant_id].dates.add(m.valid_for_date);
+    if (m.uploaded_at > menusByRestaurant[m.restaurant_id].lastUpload) {
+      menusByRestaurant[m.restaurant_id].lastUpload = m.uploaded_at;
+    }
+  }
+
+  const enriched = (data ?? []).map((r) => {
+    const info = menusByRestaurant[r.id];
+    const lastMenuDate = info?.last ?? null;
+    const todayUploaded = info?.dates.has(today) ?? false;
+    const tomorrowUploaded = info?.dates.has(tomorrow) ?? false;
+
+    // Dní od posledního uploadu
+    let daysInactive: number | null = null;
+    if (info?.lastUpload) {
+      const lastUploadDate = new Date(info.lastUpload);
+      daysInactive = Math.floor((Date.now() - lastUploadDate.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    return {
+      ...r,
+      lastMenuDate,
+      todayUploaded,
+      tomorrowUploaded,
+      daysInactive,
+    };
+  });
 
   return NextResponse.json(enriched);
 }
@@ -91,6 +123,11 @@ export async function POST(req: Request) {
       weekend_fallback_title: "O víkendu nevaříme polední menu",
       weekend_fallback_text: "Navštivte nás v pracovní dny od 11:00 do 14:30.",
       serves_weekend: false,
+      fallback_type: "text",
+      fallback_title: "Dnešní menu právě připravujeme",
+      fallback_text: "Zkuste to prosím později nebo nám zavolejte.",
+      opening_days: [1, 2, 3, 4, 5],
+      menu_active_from: "00:00",
     })
     .select("id, slug, name")
     .single();
