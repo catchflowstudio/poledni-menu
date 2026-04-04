@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { verifySaToken } from "@/app/api/superadmin/auth/route";
+import { checkSaAuth } from "@/lib/security/superadmin";
 import { verifyCsrf } from "@/lib/security/csrf";
 import { sanitizeField, sanitizePhone } from "@/lib/security/sanitize";
 import { logSecurityEvent } from "@/lib/security/logger";
 import bcrypt from "bcrypt";
-
-async function checkAuth() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("sa_token")?.value;
-  const secret = process.env.SUPERADMIN_SECRET;
-  if (!secret || !token) return false;
-  return verifySaToken(token, secret);
-}
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -26,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: Props) {
     return NextResponse.json({ error: "Neplatný požadavek." }, { status: 403 });
   }
 
-  if (!(await checkAuth())) {
+  if (!(await checkSaAuth())) {
     return NextResponse.json({ error: "Nepřihlášen." }, { status: 401 });
   }
 
@@ -82,7 +73,7 @@ export async function DELETE(req: NextRequest, { params }: Props) {
     return NextResponse.json({ error: "Neplatný požadavek." }, { status: 403 });
   }
 
-  if (!(await checkAuth())) {
+  if (!(await checkSaAuth())) {
     return NextResponse.json({ error: "Nepřihlášen." }, { status: 401 });
   }
 
