@@ -59,8 +59,14 @@ export async function getSession(): Promise<SessionPayload | null> {
   }
 }
 
-/** Smaže session cookie */
+/** Smaže session cookie — se stejnými atributy jako při nastavení */
 export async function deleteSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  cookieStore.set(COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
 }
