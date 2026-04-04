@@ -16,8 +16,10 @@ const MAX_SIZE = 10 * 1024 * 1024;
 type DateChoice = "today" | "tomorrow" | "custom";
 
 export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
+  void slug; // used only for context, not needed in form anymore
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -28,7 +30,6 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
-    date?: string;
   } | null>(null);
 
   const activeDate =
@@ -106,12 +107,12 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
       setMessage({
         type: "success",
         text: `Menu nahráno pro ${formatDateCzechShort(activeDate)}`,
-        date: activeDate,
       });
 
       setFile(null);
       setPreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
 
       router.refresh();
     } catch {
@@ -143,7 +144,7 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
     textAlign: "center" as const,
   });
 
-  // Success state — show confirmation instead of form
+  // Success state
   if (message?.type === "success") {
     return (
       <div style={{ textAlign: "center", padding: "12px 0" }}>
@@ -170,39 +171,14 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
           {message.text}
         </p>
 
-        {preview && (
-          <img
-            src={preview}
-            alt="Nahrané menu"
-            style={{
-              width: "100%",
-              maxWidth: 280,
-              borderRadius: "var(--radius-sm)",
-              marginBottom: 20,
-              opacity: 0.9,
-            }}
-          />
-        )}
-
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-          <a
-            href={`/${slug}/menu`}
-            className="btn btn-secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: "0.85rem" }}
-          >
-            Zobrazit veřejné menu
-          </a>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => { setMessage(null); setPreview(null); }}
-            style={{ fontSize: "0.85rem" }}
-          >
-            Nahrát další
-          </button>
-        </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => { setMessage(null); setPreview(null); }}
+          style={{ fontSize: "0.85rem" }}
+        >
+          Nahrát další
+        </button>
       </div>
     );
   }
@@ -235,7 +211,7 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
           </div>
         )}
 
-        {/* Upload area */}
+        {/* Upload area — drag & drop / click */}
         <div
           className={uploadAreaClass}
           onClick={() => fileInputRef.current?.click()}
@@ -244,6 +220,7 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
+          {/* Hidden file input for gallery/file picker */}
           <input
             ref={fileInputRef}
             type="file"
@@ -268,20 +245,32 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
           )}
         </div>
 
-        {/* Mobile buttons */}
+        {/* Hidden camera input */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          capture="environment"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+
+        {/* Action buttons below upload area */}
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           {preview ? (
             <button
               type="button"
               className="btn btn-ghost"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => { setFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
               style={{ flex: 1, fontSize: "0.8rem" }}
             >
               Změnit fotku
             </button>
           ) : (
             <>
-              <label
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
                 style={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
                   gap: 6, padding: "10px 16px", borderRadius: "var(--radius-sm)",
@@ -289,16 +278,11 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
                   color: "var(--muted)", fontSize: "0.82rem", cursor: "pointer",
                 }}
               >
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  capture="environment"
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                />
                 Vyfotit
-              </label>
-              <label
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
                 style={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
                   gap: 6, padding: "10px 16px", borderRadius: "var(--radius-sm)",
@@ -306,14 +290,8 @@ export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
                   color: "var(--muted)", fontSize: "0.82rem", cursor: "pointer",
                 }}
               >
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                />
                 Z galerie
-              </label>
+              </button>
             </>
           )}
         </div>

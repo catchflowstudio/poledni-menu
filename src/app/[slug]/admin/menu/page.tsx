@@ -12,6 +12,7 @@ import { LogoutButton } from "@/components/admin/LogoutButton";
 import { RestaurantSettings } from "@/components/admin/RestaurantSettings";
 import { EmbedSnippet } from "@/components/admin/EmbedSnippet";
 import { Collapsible } from "@/components/admin/Collapsible";
+import { MenuStatusCard } from "@/components/admin/MenuStatusCard";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -112,103 +113,25 @@ export default async function AdminDashboard({ params }: Props) {
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: 10,
-            marginBottom: 16,
-          }}
-        >
-          {/* Dnes */}
-          <div className="glass-card" style={{ padding: "16px 16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: todayStatus === "uploaded" ? "#22c55e" : "rgba(245,158,11,0.6)",
-                flexShrink: 0,
-              }} />
-              <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
-                Dnes
-              </span>
-            </div>
-            <p style={{
-              fontSize: "0.88rem",
-              fontWeight: 500,
-              color: todayStatus === "uploaded" ? "var(--ivory)" : "var(--muted)",
-              marginBottom: todayMenu ? 10 : 0,
-            }}>
-              {todayStatus === "uploaded" ? "Nahráno" : "Chybí"}
-            </p>
-            {todayMenu && (
-              <>
-                <img
-                  src={todayMenu.image_url}
-                  alt="Dnešní menu"
-                  style={{
-                    width: "100%",
-                    borderRadius: 4,
-                    marginBottom: 6,
-                  }}
-                />
-                <p style={{ fontSize: "0.72rem", color: "var(--dim)" }}>
-                  {formatDateCzechShort(todayMenu.valid_for_date)}
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Zítra */}
-          <div className="glass-card" style={{ padding: "16px 16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: tomorrowStatus === "uploaded" ? "#22c55e" : "rgba(248,250,252,0.2)",
-                flexShrink: 0,
-              }} />
-              <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
-                Zítra
-              </span>
-            </div>
-            <p style={{
-              fontSize: "0.88rem",
-              fontWeight: 500,
-              color: tomorrowStatus === "uploaded" ? "var(--ivory)" : "var(--muted)",
-              marginBottom: tomorrowMenu ? 10 : 0,
-            }}>
-              {tomorrowStatus === "uploaded" ? "Nahráno" : "—"}
-            </p>
-            {tomorrowMenu && (
-              <>
-                <img
-                  src={tomorrowMenu.image_url}
-                  alt="Zítřejší menu"
-                  style={{
-                    width: "100%",
-                    borderRadius: 4,
-                    marginBottom: 6,
-                    opacity: 0.85,
-                  }}
-                />
-                <p style={{ fontSize: "0.72rem", color: "var(--dim)" }}>
-                  {formatDateCzechShort(tomorrowMenu.valid_for_date)}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Quick link */}
-        <a
-          href={`/${slug}/menu`}
-          className="btn btn-ghost"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "block",
-            textAlign: "center",
-            width: "100%",
             marginBottom: 24,
-            fontSize: "0.85rem",
           }}
         >
-          Zobrazit veřejné menu
-        </a>
+          <MenuStatusCard
+            label="Dnes"
+            date={todayDate}
+            dateFormatted={formatDateCzechShort(todayDate)}
+            imageUrl={todayMenu?.image_url ?? null}
+            uploaded={todayStatus === "uploaded"}
+          />
+          <MenuStatusCard
+            label="Zítra"
+            date={tomorrowDate}
+            dateFormatted={formatDateCzechShort(tomorrowDate)}
+            imageUrl={tomorrowMenu?.image_url ?? null}
+            uploaded={tomorrowStatus === "uploaded"}
+            dimImage
+          />
+        </div>
 
         {/* Collapsible: Nastavení */}
         <Collapsible title="Nastavení" hint="Název, dny, fallback zprávy">
