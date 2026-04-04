@@ -10,6 +10,8 @@ export default function MenuEmbedLayout({
           background: transparent !important;
           margin: 0 !important;
           padding: 0 !important;
+          min-height: 0 !important;
+          height: auto !important;
         }
         body::before,
         body::after {

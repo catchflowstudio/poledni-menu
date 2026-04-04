@@ -32,7 +32,8 @@ export function MenuFrameSync({ visible, menuDate }: Props) {
     if (window.parent === window) return;
 
     function sendHeight() {
-      const height = document.documentElement.scrollHeight;
+      // Měříme skutečný obsah body, ne celý dokument (ten může mít extra výšku)
+      const height = document.body.offsetHeight;
       window.parent.postMessage({ type: "menu-resize", height }, "*");
     }
 
