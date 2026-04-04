@@ -4,6 +4,7 @@ import {
   getTodayPrague,
   getTomorrowPrague,
   getPragueDayOfWeek,
+  getTomorrowDayOfWeek,
   isPastTimePrague,
 } from "@/lib/date/prague";
 import type { Menu, Restaurant, DashboardData } from "@/types";
@@ -78,6 +79,11 @@ export async function getTomorrowMenu(
 /**
  * Určí stav zobrazení pro veřejnou část.
  * Respektuje opening_days a menu_active_from.
+ *
+ * menu_active_from logika:
+ *   "18:00" = po 18:00 se zobrazí zítřejší menu (pro restaurace co nahrávají den předem)
+ *   "00:00" = menu se zobrazí od půlnoci (výchozí)
+ *   "08:00" = menu se zobrazí od 8:00 ráno
  */
 export async function getPublicMenuState(
   restaurant: Restaurant
@@ -86,21 +92,36 @@ export async function getPublicMenuState(
   menu: Menu | null;
   tomorrowMenu: Menu | null;
 }> {
-  const dayOfWeek = getPragueDayOfWeek();
   const openingDays = restaurant.opening_days ?? [1, 2, 3, 4, 5];
+  const activeFrom = restaurant.menu_active_from ?? "00:00";
 
-  // Pokud dnes není "otevírací den" pro polední menu
-  if (!openingDays.includes(dayOfWeek)) {
-    // Ale pokud serves_weekend je true a je víkend, pokračuj normálně
-    if (!restaurant.serves_weekend) {
-      const tomorrowMenu = await getTomorrowMenu(restaurant.id);
-      return { type: "closed_day", menu: null, tomorrowMenu };
+  // Speciální případ: "18:00" znamená "od 18:00 předchozího dne"
+  // → po 18:00 se cílový den posouvá na zítřek
+  if (activeFrom === "18:00" && isPastTimePrague("18:00")) {
+    const tomorrow = getTomorrowPrague();
+    const tomorrowDayOfWeek = getTomorrowDayOfWeek();
+
+    if (!openingDays.includes(tomorrowDayOfWeek)) {
+      return { type: "closed_day", menu: null, tomorrowMenu: null };
     }
+
+    const menu = await getMenuForDate(restaurant.id, tomorrow);
+    if (menu) {
+      return { type: "menu", menu, tomorrowMenu: null };
+    }
+    return { type: "no_menu", menu: null, tomorrowMenu: null };
   }
 
-  // Zkontroluj menu_active_from — pokud je nastaveno a ještě nenastal čas
-  const activeFrom = restaurant.menu_active_from ?? "00:00";
-  if (activeFrom !== "00:00" && !isPastTimePrague(activeFrom)) {
+  // Standardní logika: cílový den = dnes
+  const dayOfWeek = getPragueDayOfWeek();
+
+  if (!openingDays.includes(dayOfWeek)) {
+    const tomorrowMenu = await getTomorrowMenu(restaurant.id);
+    return { type: "closed_day", menu: null, tomorrowMenu };
+  }
+
+  // Zkontroluj menu_active_from — pokud ještě nenastal čas (08:00 apod.)
+  if (activeFrom !== "00:00" && activeFrom !== "18:00" && !isPastTimePrague(activeFrom)) {
     const tomorrowMenu = await getTomorrowMenu(restaurant.id);
     return { type: "no_menu", menu: null, tomorrowMenu };
   }

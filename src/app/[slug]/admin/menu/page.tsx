@@ -4,6 +4,7 @@ import { getDashboardData } from "@/lib/menu/logic";
 import {
   getTodayPrague,
   getTomorrowPrague,
+  formatDateCzech,
   formatDateCzechShort,
   getPragueDayOfWeek,
 } from "@/lib/date/prague";
@@ -54,16 +55,27 @@ export default async function AdminDashboard({ params }: Props) {
             padding: "20px 0 20px",
           }}
         >
-          <h1
-            style={{
-              fontFamily: "var(--font-heading)",
-              fontSize: "1.15rem",
-              fontWeight: 700,
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {restaurant.name}
-          </h1>
+          <div>
+            <h1
+              style={{
+                fontFamily: "var(--font-heading)",
+                fontSize: "1.15rem",
+                fontWeight: 700,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {restaurant.name}
+            </h1>
+            <p
+              style={{
+                fontSize: "0.78rem",
+                color: "var(--muted)",
+                marginTop: 2,
+              }}
+            >
+              {formatDateCzech(todayDate)}
+            </p>
+          </div>
           <LogoutButton slug={slug} />
         </div>
 

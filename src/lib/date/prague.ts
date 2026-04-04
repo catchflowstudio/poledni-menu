@@ -30,6 +30,16 @@ export function getPragueDayOfWeek(): number {
   return pragueNow.getDay();
 }
 
+/** Vrátí den v týdnu pro zítřek v Prague timezone (0 = neděle, 6 = sobota) */
+export function getTomorrowDayOfWeek(): number {
+  const now = new Date();
+  const pragueNow = new Date(
+    now.toLocaleString("en-US", { timeZone: TIMEZONE })
+  );
+  pragueNow.setDate(pragueNow.getDate() + 1);
+  return pragueNow.getDay();
+}
+
 /** Je dnes v Prague timezone víkend? */
 export function isWeekendPrague(): boolean {
   const day = getPragueDayOfWeek();

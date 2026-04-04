@@ -10,10 +10,9 @@ const DAY_LABELS: Record<number, string> = {
 };
 
 const TIME_OPTIONS = [
-  { value: "00:00", label: "Od půlnoci" },
-  { value: "06:00", label: "Od 6:00" },
-  { value: "09:00", label: "Od 9:00" },
-  { value: "11:00", label: "Od 11:00" },
+  { value: "18:00", label: "V 18:00 předchozího dne" },
+  { value: "00:00", label: "O půlnoci" },
+  { value: "08:00", label: "V 8:00" },
 ];
 
 interface Props {
@@ -33,6 +32,7 @@ export function RestaurantSettings({ initialValues }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [editingFallback, setEditingFallback] = useState(false);
 
   function update<K extends keyof typeof values>(key: K, val: (typeof values)[K]) {
     setValues((v) => ({ ...v, [key]: val }));
@@ -61,6 +61,7 @@ export function RestaurantSettings({ initialValues }: Props) {
 
     if (res.ok) {
       setSaved(true);
+      setEditingFallback(false);
       setTimeout(() => setSaved(false), 3000);
     } else {
       const data = await res.json();
@@ -156,28 +157,47 @@ export function RestaurantSettings({ initialValues }: Props) {
             </button>
           ))}
         </div>
-        <p style={hintStyle}>Hodí se, pokud nahráváte menu den předem</p>
+        <p style={hintStyle}>
+          Pokud nahráváte menu v den, kdy ho nabízíte, zobrazí se ihned
+        </p>
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
 
-      {/* Fallback — co zobrazit když menu chybí */}
+      {/* Fallback — inline s edit ikonkou */}
       <div>
-        <label style={labelStyle}>Zpráva když menu není nahrané</label>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>Zpráva když menu není nahrané</label>
+          <button
+            type="button"
+            onClick={() => setEditingFallback(!editingFallback)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--muted)",
+              fontSize: "0.82rem",
+              padding: "2px 4px",
+            }}
+          >
+            {editingFallback ? "✕" : "✎"}
+          </button>
+        </div>
+
+        {editingFallback ? (
           <input
             className="input"
             value={values.fallback_title}
             onChange={(e) => update("fallback_title", e.target.value)}
-            placeholder="Nadpis"
+            placeholder="Text zprávy"
+            style={{ marginTop: 8 }}
+            autoFocus
           />
-          <input
-            className="input"
-            value={values.fallback_text}
-            onChange={(e) => update("fallback_text", e.target.value)}
-            placeholder="Doplňující text"
-          />
-        </div>
+        ) : (
+          <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginTop: 4 }}>
+            {values.fallback_title || "Dnešní menu právě připravujeme"}
+          </p>
+        )}
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
