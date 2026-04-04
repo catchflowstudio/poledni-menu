@@ -134,17 +134,14 @@ export default async function AdminDashboard({ params }: Props) {
         </div>
 
         {/* Collapsible: Nastavení */}
-        <Collapsible title="Nastavení" hint="Název, dny, fallback zprávy">
+        <Collapsible title="Nastavení" hint="Telefon, dny, zprávy">
           <RestaurantSettings
             initialValues={{
-              name: restaurant.name,
               phone: restaurant.phone,
               static_menu_url: restaurant.static_menu_url,
               fallback_type: restaurant.fallback_type,
               fallback_title: restaurant.fallback_title,
               fallback_text: restaurant.fallback_text,
-              weekend_fallback_title: restaurant.weekend_fallback_title,
-              weekend_fallback_text: restaurant.weekend_fallback_text,
               opening_days: restaurant.opening_days,
               menu_active_from: restaurant.menu_active_from,
             }}

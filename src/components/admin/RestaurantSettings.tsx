@@ -12,22 +12,17 @@ const DAY_LABELS: Record<number, string> = {
 const TIME_OPTIONS = [
   { value: "00:00", label: "Od půlnoci" },
   { value: "06:00", label: "Od 6:00" },
-  { value: "08:00", label: "Od 8:00" },
   { value: "09:00", label: "Od 9:00" },
-  { value: "10:00", label: "Od 10:00" },
   { value: "11:00", label: "Od 11:00" },
 ];
 
 interface Props {
   initialValues: {
-    name: string;
     phone: string | null;
     static_menu_url: string | null;
     fallback_type: FallbackType;
     fallback_title: string;
     fallback_text: string;
-    weekend_fallback_title: string;
-    weekend_fallback_text: string;
     opening_days: number[];
     menu_active_from: string;
   };
@@ -102,16 +97,6 @@ export function RestaurantSettings({ initialValues }: Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-      {/* Název */}
-      <div>
-        <label style={labelStyle}>Název restaurace</label>
-        <input
-          className="input"
-          value={values.name}
-          onChange={(e) => update("name", e.target.value)}
-        />
-      </div>
-
       {/* Telefon */}
       <div>
         <label style={labelStyle}>Telefon</label>
@@ -154,10 +139,9 @@ export function RestaurantSettings({ initialValues }: Props) {
             );
           })}
         </div>
-        <p style={hintStyle}>Ostatní dny se zobrazí náhradní zpráva</p>
       </div>
 
-      {/* Kdy se menu zobrazí — chip buttons instead of select */}
+      {/* Kdy se menu zobrazí */}
       <div>
         <label style={labelStyle}>Kdy se má menu začít zobrazovat?</label>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -177,84 +161,23 @@ export function RestaurantSettings({ initialValues }: Props) {
 
       <div style={{ height: 1, background: "var(--border)" }} />
 
-      {/* Co zobrazit, když menu chybí */}
+      {/* Fallback — co zobrazit když menu chybí */}
       <div>
-        <label style={labelStyle}>Co zobrazit, když menu není nahrané?</label>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          {([
-            { value: "text" as const, label: "Zpráva" },
-            { value: "static_menu" as const, label: "Stálé menu" },
-            { value: "phone" as const, label: "Zavolejte" },
-          ]).map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => update("fallback_type", value)}
-              style={chipStyle(values.fallback_type === value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {values.fallback_type === "text" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <input
-              className="input"
-              value={values.fallback_title}
-              onChange={(e) => update("fallback_title", e.target.value)}
-              placeholder="Nadpis"
-            />
-            <input
-              className="input"
-              value={values.fallback_text}
-              onChange={(e) => update("fallback_text", e.target.value)}
-              placeholder="Doplňující text"
-            />
-          </div>
-        )}
-
-        {values.fallback_type === "static_menu" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <input
-              className="input"
-              value={values.static_menu_url ?? ""}
-              onChange={(e) => update("static_menu_url", e.target.value || null)}
-              placeholder="https://odkaz-na-stale-menu.cz"
-            />
-            {!values.static_menu_url && (
-              <p style={{ ...hintStyle, color: "#f59e0b" }}>
-                Vyplňte odkaz na stálé menu
-              </p>
-            )}
-          </div>
-        )}
-
-        {values.fallback_type === "phone" && !values.phone && (
-          <p style={{ ...hintStyle, color: "#f59e0b" }}>
-            Vyplňte telefon výše
-          </p>
-        )}
-      </div>
-
-      {/* Zpráva pro dny bez menu */}
-      <div>
-        <label style={labelStyle}>Zpráva pro dny bez poledního menu</label>
+        <label style={labelStyle}>Zpráva když menu není nahrané</label>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <input
             className="input"
-            value={values.weekend_fallback_title}
-            onChange={(e) => update("weekend_fallback_title", e.target.value)}
+            value={values.fallback_title}
+            onChange={(e) => update("fallback_title", e.target.value)}
             placeholder="Nadpis"
           />
           <input
             className="input"
-            value={values.weekend_fallback_text}
-            onChange={(e) => update("weekend_fallback_text", e.target.value)}
-            placeholder="Text"
+            value={values.fallback_text}
+            onChange={(e) => update("fallback_text", e.target.value)}
+            placeholder="Doplňující text"
           />
         </div>
-        <p style={hintStyle}>Zobrazí se ve dnech, které nemáte zaškrtnuté výše</p>
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
