@@ -143,32 +143,29 @@ export async function getDashboardData(
   restaurantId: string
 ): Promise<DashboardData | null> {
   const supabase = getSupabasePublic();
-
-  const { data: restaurant } = await supabase
-    .from("restaurants")
-    .select(RESTAURANT_COLS)
-    .eq("id", restaurantId)
-    .single();
-
-  if (!restaurant) return null;
-
-  const typedRestaurant = restaurant as Restaurant;
   const today = getTodayPrague();
   const tomorrow = getTomorrowPrague();
 
-  const [todayMenu, tomorrowMenu, lastMenu] = await Promise.all([
+  // Všechny dotazy paralelně — restaurant + oba menu najednou
+  const [restaurantResult, todayMenu, tomorrowMenu] = await Promise.all([
+    supabase
+      .from("restaurants")
+      .select(RESTAURANT_COLS)
+      .eq("id", restaurantId)
+      .single(),
     getMenuForDate(restaurantId, today),
     getMenuForDate(restaurantId, tomorrow),
-    getLastUploadedMenu(restaurantId),
   ]);
 
+  if (!restaurantResult.data) return null;
+
   return {
-    restaurant: typedRestaurant,
+    restaurant: restaurantResult.data as Restaurant,
     todayStatus: todayMenu ? "uploaded" : "not_uploaded",
     tomorrowStatus: tomorrowMenu ? "uploaded" : "not_uploaded",
     todayMenu,
     tomorrowMenu,
-    lastMenu,
+    lastMenu: null,
   };
 }
 
