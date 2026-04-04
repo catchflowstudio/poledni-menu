@@ -3,10 +3,19 @@
 import { useState } from "react";
 import type { FallbackType } from "@/types";
 
-const DAY_LABELS = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
+// Monday-first order: Po=1, Út=2, ..., Ne=0
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const DAY_LABELS: Record<number, string> = {
+  0: "Ne", 1: "Po", 2: "Út", 3: "St", 4: "Čt", 5: "Pá", 6: "So",
+};
 
 const TIME_OPTIONS = [
-  "00:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+  { value: "00:00", label: "Od půlnoci" },
+  { value: "06:00", label: "Od 6:00" },
+  { value: "08:00", label: "Od 8:00" },
+  { value: "09:00", label: "Od 9:00" },
+  { value: "10:00", label: "Od 10:00" },
+  { value: "11:00", label: "Od 11:00" },
 ];
 
 interface Props {
@@ -14,7 +23,6 @@ interface Props {
     name: string;
     phone: string | null;
     static_menu_url: string | null;
-    serves_weekend: boolean;
     fallback_type: FallbackType;
     fallback_title: string;
     fallback_text: string;
@@ -48,10 +56,13 @@ export function RestaurantSettings({ initialValues }: Props) {
     setError("");
     setSaved(false);
 
+    // Also sync serves_weekend based on opening_days
+    const servesWeekend = values.opening_days.includes(0) || values.opening_days.includes(6);
+
     const res = await fetch("/api/restaurant/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+      body: JSON.stringify({ ...values, serves_weekend: servesWeekend }),
     });
 
     if (res.ok) {
@@ -79,8 +90,8 @@ export function RestaurantSettings({ initialValues }: Props) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* Název restaurace */}
+    <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+      {/* Název */}
       <div>
         <label style={labelStyle}>Název restaurace</label>
         <input
@@ -99,10 +110,9 @@ export function RestaurantSettings({ initialValues }: Props) {
           onChange={(e) => update("phone", e.target.value || null)}
           placeholder="+420 777 000 111"
         />
-        <p style={hintStyle}>Zobrazí se jako CTA tlačítko v menu</p>
       </div>
 
-      {/* URL stálého menu */}
+      {/* Stálé menu */}
       <div>
         <label style={labelStyle}>Odkaz na stálé menu</label>
         <input
@@ -111,22 +121,22 @@ export function RestaurantSettings({ initialValues }: Props) {
           onChange={(e) => update("static_menu_url", e.target.value || null)}
           placeholder="https://..."
         />
-        <p style={hintStyle}>Odkaz na PDF nebo stránku se stálým menu</p>
+        <p style={hintStyle}>PDF nebo stránka se stálým menu</p>
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
 
-      {/* Otevírací dny */}
+      {/* Dny s menu — Monday first */}
       <div>
-        <label style={labelStyle}>Dny s poledním menu</label>
+        <label style={labelStyle}>Které dny vaříte polední menu?</label>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {DAY_LABELS.map((label, i) => {
-            const active = values.opening_days.includes(i);
+          {DAY_ORDER.map((dayNum) => {
+            const active = values.opening_days.includes(dayNum);
             return (
               <button
-                key={i}
+                key={dayNum}
                 type="button"
-                onClick={() => toggleDay(i)}
+                onClick={() => toggleDay(dayNum)}
                 style={{
                   width: 42,
                   height: 36,
@@ -140,95 +150,42 @@ export function RestaurantSettings({ initialValues }: Props) {
                   transition: "all 0.15s",
                 }}
               >
-                {label}
+                {DAY_LABELS[dayNum]}
               </button>
             );
           })}
         </div>
-        <p style={hintStyle}>Ve vybrané dny se zobrazí polední menu, ostatní dny fallback</p>
+        <p style={hintStyle}>Ostatní dny se zobrazí náhradní zpráva</p>
       </div>
 
-      {/* Víkendový režim */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-        }}
-      >
-        <div>
-          <p style={{ fontSize: "0.82rem", color: "var(--ivory)", fontWeight: 500 }}>
-            Vaříme i o víkendu
-          </p>
-          <p style={hintStyle}>
-            {values.serves_weekend
-              ? "Menu se zobrazí i v sobotu a neděli"
-              : "O víkendu se zobrazí víkendová zpráva"}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => update("serves_weekend", !values.serves_weekend)}
-          style={{
-            flexShrink: 0,
-            width: 48,
-            height: 28,
-            borderRadius: 14,
-            border: "none",
-            cursor: "pointer",
-            background: values.serves_weekend ? "var(--gold)" : "rgba(248,250,252,0.15)",
-            transition: "background 0.2s",
-            position: "relative",
-            padding: 0,
-          }}
-        >
-          <span
-            style={{
-              position: "absolute",
-              top: 3,
-              left: values.serves_weekend ? 23 : 3,
-              width: 22,
-              height: 22,
-              borderRadius: "50%",
-              background: "var(--ivory)",
-              transition: "left 0.2s",
-              display: "block",
-            }}
-          />
-        </button>
-      </div>
-
-      {/* Menu active from */}
+      {/* Kdy se menu zobrazí */}
       <div>
-        <label style={labelStyle}>Menu se zobrazí od</label>
+        <label style={labelStyle}>Kdy se má menu začít zobrazovat?</label>
         <select
           className="input"
           value={values.menu_active_from}
           onChange={(e) => update("menu_active_from", e.target.value)}
-          style={{ maxWidth: 180 }}
+          style={{ maxWidth: 200 }}
         >
           {TIME_OPTIONS.map((t) => (
-            <option key={t} value={t}>
-              {t === "00:00" ? "Půlnoc (výchozí)" : `${t}`}
-            </option>
+            <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </select>
         <p style={hintStyle}>
-          Menu nahrané den předem se zobrazí až od tohoto času
+          Hodí se, pokud nahráváte menu den předem
         </p>
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
 
-      {/* Fallback — když menu chybí */}
+      {/* Fallback */}
       <div>
-        <label style={labelStyle}>Když menu chybí — co zobrazit?</label>
+        <label style={labelStyle}>Co zobrazit, když menu není nahrané?</label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           {([
-            { value: "text" as const, label: "Textová zpráva" },
-            { value: "static_menu" as const, label: "Odkaz na stálé menu" },
-            { value: "phone" as const, label: "Zavolejte nám" },
+            { value: "text" as const, label: "Zpráva" },
+            { value: "static_menu" as const, label: "Stálé menu" },
+            { value: "phone" as const, label: "Zavolejte" },
           ]).map(({ value, label }) => (
             <button
               key={value}
@@ -269,42 +226,42 @@ export function RestaurantSettings({ initialValues }: Props) {
               className="input"
               value={values.fallback_text}
               onChange={(e) => update("fallback_text", e.target.value)}
-              placeholder="Popis"
+              placeholder="Doplňující text"
             />
           </div>
         )}
 
-        {values.fallback_type === "static_menu" && (
-          <p style={hintStyle}>
-            Zobrazí se odkaz na stálé menu{values.static_menu_url ? "" : " — nejdřív vyplňte odkaz výše"}
+        {values.fallback_type === "static_menu" && !values.static_menu_url && (
+          <p style={{ ...hintStyle, color: "#f59e0b" }}>
+            Vyplňte odkaz na stálé menu výše
           </p>
         )}
 
-        {values.fallback_type === "phone" && (
-          <p style={hintStyle}>
-            Zobrazí se CTA „Zavolejte si o dnešní nabídku"{values.phone ? "" : " — nejdřív vyplňte telefon"}
+        {values.fallback_type === "phone" && !values.phone && (
+          <p style={{ ...hintStyle, color: "#f59e0b" }}>
+            Vyplňte telefon výše
           </p>
         )}
       </div>
 
-      {/* Víkendová zpráva */}
+      {/* Zpráva pro dny bez menu */}
       <div>
-        <label style={labelStyle}>Víkendová zpráva</label>
+        <label style={labelStyle}>Zpráva pro dny bez poledního menu</label>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <input
             className="input"
             value={values.weekend_fallback_title}
             onChange={(e) => update("weekend_fallback_title", e.target.value)}
-            placeholder="Nadpis pro víkend"
+            placeholder="Nadpis"
           />
           <input
             className="input"
             value={values.weekend_fallback_text}
             onChange={(e) => update("weekend_fallback_text", e.target.value)}
-            placeholder="Text pro víkend"
+            placeholder="Text"
           />
         </div>
-        <p style={hintStyle}>Zobrazí se místo menu ve dnech, kdy restaurace nevaří polední menu</p>
+        <p style={hintStyle}>Zobrazí se ve dnech, které nemáte zaškrtnuté výše</p>
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
@@ -317,17 +274,13 @@ export function RestaurantSettings({ initialValues }: Props) {
           onClick={save}
           disabled={saving}
         >
-          {saving ? "Ukládám…" : "Uložit nastavení"}
+          {saving ? "Ukládám…" : "Uložit"}
         </button>
         {saved && (
-          <span style={{ fontSize: "0.82rem", color: "var(--gold)" }}>
-            Uloženo
-          </span>
+          <span style={{ fontSize: "0.82rem", color: "var(--gold)" }}>Uloženo</span>
         )}
         {error && (
-          <span style={{ fontSize: "0.82rem", color: "#fca5a5" }}>
-            {error}
-          </span>
+          <span style={{ fontSize: "0.82rem", color: "#fca5a5" }}>{error}</span>
         )}
       </div>
     </div>

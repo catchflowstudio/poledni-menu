@@ -7,33 +7,42 @@ import { formatDateCzechShort } from "@/lib/date/prague";
 interface UploadFormProps {
   slug: string;
   todayDate: string;
+  tomorrowDate: string;
 }
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 10 * 1024 * 1024;
 
-export function UploadForm({ slug, todayDate }: UploadFormProps) {
+type DateChoice = "today" | "tomorrow" | "custom";
+
+export function UploadForm({ slug, todayDate, tomorrowDate }: UploadFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [date, setDate] = useState(todayDate);
+  const [dateChoice, setDateChoice] = useState<DateChoice>("today");
+  const [customDate, setCustomDate] = useState(todayDate);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
+    date?: string;
   } | null>(null);
 
-  /** Validace a nastavení souboru */
+  const activeDate =
+    dateChoice === "today" ? todayDate :
+    dateChoice === "tomorrow" ? tomorrowDate :
+    customDate;
+
   const processFile = useCallback((selected: File) => {
     if (!ALLOWED_TYPES.includes(selected.type)) {
       setMessage({ type: "error", text: "Povolené formáty: JPG, PNG, WEBP." });
       return;
     }
     if (selected.size > MAX_SIZE) {
-      setMessage({ type: "error", text: "Soubor je příliš velký (max 10 MB)." });
+      setMessage({ type: "error", text: "Max 10 MB." });
       return;
     }
 
@@ -50,7 +59,6 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
     if (selected) processFile(selected);
   }
 
-  // Drag & Drop
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -67,7 +75,6 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
-
     const dropped = e.dataTransfer.files?.[0];
     if (dropped) processFile(dropped);
   }
@@ -81,7 +88,7 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("date", date);
+    formData.append("date", activeDate);
 
     try {
       const res = await fetch("/api/menu/upload", {
@@ -98,17 +105,17 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
 
       setMessage({
         type: "success",
-        text: `Menu bylo úspěšně nahráno pro ${formatDateCzechShort(date)}.`,
+        text: `Menu nahráno pro ${formatDateCzechShort(activeDate)}`,
+        date: activeDate,
       });
 
-      // Reset
       setFile(null);
       setPreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
 
       router.refresh();
     } catch {
-      setMessage({ type: "error", text: "Chyba připojení. Zkuste to znovu." });
+      setMessage({ type: "error", text: "Chyba připojení." });
     } finally {
       setLoading(false);
     }
@@ -122,10 +129,113 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
     .filter(Boolean)
     .join(" ");
 
+  const dateButtonStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: "10px 12px",
+    borderRadius: "var(--radius-sm)",
+    border: active ? "1px solid var(--border-gold)" : "1px solid var(--border)",
+    background: active ? "var(--gold-dim)" : "transparent",
+    color: active ? "var(--gold)" : "var(--muted)",
+    cursor: "pointer",
+    fontSize: "0.85rem",
+    fontWeight: active ? 600 : 400,
+    transition: "all 0.15s",
+    textAlign: "center" as const,
+  });
+
+  // Success state — show confirmation instead of form
+  if (message?.type === "success") {
+    return (
+      <div style={{ textAlign: "center", padding: "12px 0" }}>
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            background: "rgba(34,197,94,0.15)",
+            border: "1px solid rgba(34,197,94,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 16px",
+            fontSize: "1.3rem",
+          }}
+        >
+          ✓
+        </div>
+        <p style={{ fontSize: "1rem", fontWeight: 600, color: "var(--ivory)", marginBottom: 4 }}>
+          Menu nahráno
+        </p>
+        <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 20 }}>
+          {message.text}
+        </p>
+
+        {preview && (
+          <img
+            src={preview}
+            alt="Nahrané menu"
+            style={{
+              width: "100%",
+              maxWidth: 280,
+              borderRadius: "var(--radius-sm)",
+              marginBottom: 20,
+              opacity: 0.9,
+            }}
+          />
+        )}
+
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+          <a
+            href={`/${slug}/menu`}
+            className="btn btn-secondary"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: "0.85rem" }}
+          >
+            Zobrazit veřejné menu
+          </a>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => { setMessage(null); setPreview(null); }}
+            style={{ fontSize: "0.85rem" }}
+          >
+            Nahrát další
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        {/* Upload area s drag & drop */}
+        {/* Quick date buttons */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <button type="button" style={dateButtonStyle(dateChoice === "today")} onClick={() => setDateChoice("today")}>
+            Dnes
+          </button>
+          <button type="button" style={dateButtonStyle(dateChoice === "tomorrow")} onClick={() => setDateChoice("tomorrow")}>
+            Zítra
+          </button>
+          <button type="button" style={dateButtonStyle(dateChoice === "custom")} onClick={() => setDateChoice("custom")}>
+            Jiný den
+          </button>
+        </div>
+
+        {dateChoice === "custom" && (
+          <div style={{ marginBottom: 16 }}>
+            <input
+              type="date"
+              className="input"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+              required
+            />
+          </div>
+        )}
+
+        {/* Upload area */}
         <div
           className={uploadAreaClass}
           onClick={() => fileInputRef.current?.click()}
@@ -134,7 +244,6 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          {/* Skrytý input pro soubory — desktop */}
           <input
             ref={fileInputRef}
             type="file"
@@ -143,16 +252,14 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
           />
 
           {preview ? (
-            <img src={preview} alt="Náhled menu" className="preview-img" />
+            <img src={preview} alt="Náhled" className="preview-img" />
           ) : (
             <>
               <div style={{ fontSize: "2rem", opacity: 0.5 }}>
                 {dragOver ? "📥" : "📷"}
               </div>
               <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-                {dragOver
-                  ? "Pusťte pro nahrání"
-                  : "Klikněte nebo přetáhněte fotku menu"}
+                {dragOver ? "Pusťte pro nahrání" : "Klikněte nebo přetáhněte fotku"}
               </p>
               <p style={{ color: "var(--dim)", fontSize: "0.75rem" }}>
                 JPG, PNG nebo WEBP · max 10 MB
@@ -161,7 +268,7 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
           )}
         </div>
 
-        {/* Mobilní tlačítka — focení fotoaparátem nebo galerie */}
+        {/* Mobile buttons */}
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           {preview ? (
             <button
@@ -174,7 +281,6 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
             </button>
           ) : (
             <>
-              {/* Fotoaparát — funguje na mobilu */}
               <label
                 style={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
@@ -190,9 +296,8 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
                   onChange={handleFileChange}
                   style={{ display: "none" }}
                 />
-                📸 Vyfotit
+                Vyfotit
               </label>
-              {/* Galerie — klasický výběr souboru */}
               <label
                 style={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
@@ -207,53 +312,18 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
                   onChange={handleFileChange}
                   style={{ display: "none" }}
                 />
-                🖼 Z galerie
+                Z galerie
               </label>
             </>
           )}
         </div>
 
-        {/* Datum */}
-        <div style={{ marginTop: 20 }}>
-          <label
-            htmlFor="menu-date"
-            style={{
-              display: "block",
-              fontSize: "0.85rem",
-              color: "var(--muted)",
-              marginBottom: 8,
-            }}
-          >
-            Menu platí pro datum
-          </label>
-          <input
-            id="menu-date"
-            type="date"
-            className="input"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </div>
-
-        <p
-          style={{
-            fontSize: "0.78rem",
-            color: "var(--dim)",
-            marginTop: 12,
-            lineHeight: 1.5,
-          }}
-        >
-          Pro stejné datum nové menu nahradí původní.
+        <p style={{ fontSize: "0.75rem", color: "var(--dim)", marginTop: 12 }}>
+          Nové nahrání přepíše předchozí.
         </p>
 
-        {message && (
-          <div
-            className={`alert ${
-              message.type === "success" ? "alert--success" : "alert--error"
-            }`}
-            style={{ marginTop: 16 }}
-          >
+        {message?.type === "error" && (
+          <div className="alert alert--error" style={{ marginTop: 12 }}>
             {message.text}
           </div>
         )}
@@ -262,23 +332,11 @@ export function UploadForm({ slug, todayDate }: UploadFormProps) {
           type="submit"
           className="btn btn-primary"
           disabled={!file || loading}
-          style={{ width: "100%", marginTop: 20 }}
+          style={{ width: "100%", marginTop: 16 }}
         >
           {loading ? "Nahrávám…" : "Nahrát menu"}
         </button>
       </form>
-
-      {message?.type === "success" && (
-        <a
-          href={`/${slug}/menu`}
-          className="btn btn-secondary"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ width: "100%", marginTop: 12, textAlign: "center" }}
-        >
-          Otevřít veřejné menu ↗
-        </a>
-      )}
     </div>
   );
 }
