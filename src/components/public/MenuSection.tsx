@@ -62,21 +62,21 @@ export async function MenuSection({ slug }: MenuSectionProps) {
 
         {/* Stav: pracovní den bez menu */}
         {state.type === "no_menu" && (
-          <div className="glass-card slide-up" style={{ padding: "40px 24px", textAlign: "center" }}>
-            <div style={{ fontSize: "2rem", marginBottom: 16 }}>🍽️</div>
-            <p style={{ fontSize: "1.05rem", marginBottom: 8 }}>
+          <div className="glass-card slide-up" style={{ padding: "48px 28px", textAlign: "center" }}>
+            <div style={{ fontSize: "1.6rem", marginBottom: 16, opacity: 0.7 }}>🍽️</div>
+            <p style={{ fontSize: "1rem", marginBottom: 8, lineHeight: 1.5 }}>
               Dnešní menu právě připravujeme.
             </p>
-            <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+            <p style={{ color: "var(--muted)", fontSize: "0.88rem", lineHeight: 1.5 }}>
               Zkuste to prosím později nebo nám zavolejte.
             </p>
             {restaurant.phone && (
               <a
                 href={`tel:${restaurant.phone}`}
                 className="btn btn-primary"
-                style={{ marginTop: 20 }}
+                style={{ marginTop: 24 }}
               >
-                📞 Zavolat
+                Zavolat
               </a>
             )}
           </div>
@@ -84,19 +84,19 @@ export async function MenuSection({ slug }: MenuSectionProps) {
 
         {/* Stav: víkend */}
         {state.type === "weekend" && (
-          <div className="glass-card slide-up" style={{ padding: "40px 24px", textAlign: "center" }}>
-            <div style={{ fontSize: "2rem", marginBottom: 16 }}>☀️</div>
-            <p style={{ fontSize: "1.05rem", marginBottom: 8 }}>
+          <div className="glass-card slide-up" style={{ padding: "48px 28px", textAlign: "center" }}>
+            <div style={{ fontSize: "1.6rem", marginBottom: 16, opacity: 0.7 }}>☀️</div>
+            <p style={{ fontSize: "1rem", marginBottom: 8, lineHeight: 1.5 }}>
               {restaurant.weekend_fallback_title}
             </p>
-            <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+            <p style={{ color: "var(--muted)", fontSize: "0.88rem", lineHeight: 1.5 }}>
               {restaurant.weekend_fallback_text}
             </p>
             {restaurant.static_menu_url && (
               <a
                 href={restaurant.static_menu_url}
                 className="btn btn-secondary"
-                style={{ marginTop: 20 }}
+                style={{ marginTop: 24 }}
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -80,6 +80,7 @@ export async function getDashboardData(
 
   if (!restaurant) return null;
 
+  const typedRestaurant = restaurant as Restaurant;
   const today = getTodayPrague();
   const tomorrow = getTomorrowPrague();
 
@@ -90,7 +91,7 @@ export async function getDashboardData(
   ]);
 
   return {
-    restaurant,
+    restaurant: typedRestaurant,
     todayStatus: todayMenu ? "uploaded" : "not_uploaded",
     tomorrowStatus: tomorrowMenu ? "uploaded" : "not_uploaded",
     todayMenu,

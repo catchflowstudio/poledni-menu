@@ -5,18 +5,26 @@ const steps = [
   {
     n: "1",
     title: "Nafotíš lístek",
-    text: "Vyfotíš nebo naskenuje denní menu — papírový lístek, tabuli, cokoliv. Nahraješ přes admin dashboard za 30 sekund.",
+    text: "Vyfotíš denní menu — papírový lístek, tabuli, cokoliv. Nahraješ přes admin za 30 sekund.",
   },
   {
     n: "2",
     title: "Systém ho zpracuje",
-    text: "Fotka se převede do WebP, uloží se s datem platnosti. Zobrazí se automaticky správný den — dnes nahraješ zítřejší menu v klidu.",
+    text: "Fotka se převede do WebP, uloží s datem platnosti. Zítřejší menu nahraješ dnes, zobrazí se ve správný den.",
   },
   {
     n: "3",
     title: "Zákazníci to vidí",
-    text: "Menu se embed přes jeden řádek kódu na web restaurace. Formát A4, bez zbytečného chrome, vypadá jako součást webu.",
+    text: "Menu se embed přes jeden řádek kódu na web restaurace. Formát A4, bez zbytečností, vypadá jako součást webu.",
   },
+];
+
+const features = [
+  { label: "Formát A4", desc: "Přesný poměr stran" },
+  { label: "Průhledné pozadí", desc: "Sedí na každý web" },
+  { label: "Bez hesla pro hosty", desc: "Jen admin potřebuje login" },
+  { label: "Správné datum", desc: "Zobrazí se ve správný den" },
+  { label: "Víkendový režim", desc: "Vypínatelné polední menu" },
 ];
 
 export default function RootPage() {
@@ -24,15 +32,16 @@ export default function RootPage() {
     <main>
       {/* ── Hero ── */}
       <section className="page-center" style={{ minHeight: "60vh", paddingTop: 80 }}>
-        <div style={{ textAlign: "center", maxWidth: 560 }}>
-          <span className="badge" style={{ marginBottom: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 540 }}>
+          <span className="badge" style={{ marginBottom: 28 }}>
             Micro-SaaS pro restaurace
           </span>
           <h1
             style={{
-              fontSize: "clamp(2rem, 5vw, 3.2rem)",
+              fontSize: "clamp(1.9rem, 5vw, 3rem)",
               marginBottom: 20,
               lineHeight: 1.15,
+              letterSpacing: "-0.02em",
             }}
           >
             Polední menu online
@@ -42,18 +51,21 @@ export default function RootPage() {
           <p
             style={{
               color: "var(--muted)",
-              fontSize: "1.05rem",
+              fontSize: "1.02rem",
               lineHeight: 1.7,
-              marginBottom: 36,
+              marginBottom: 40,
+              maxWidth: 460,
+              margin: "0 auto 40px",
             }}
           >
             Nafotíš lístek, nahraješ fotku. Hotovo.
+            <br />
             Systém ji zobrazí na webu restaurace ve formátu A4 —
             bez psaní jídel, bez CMS, bez zbytečností.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={DEMO_WEB} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-              Ukázka webu →
+              Ukázka webu
             </a>
             <a href={DEMO_ADMIN} className="btn btn-secondary">
               Zkusit admin demo
@@ -74,8 +86,9 @@ export default function RootPage() {
           <h2
             style={{
               textAlign: "center",
-              fontSize: "clamp(1.5rem, 3vw, 2.2rem)",
-              marginBottom: 56,
+              fontSize: "clamp(1.4rem, 3vw, 2rem)",
+              marginBottom: 48,
+              letterSpacing: "-0.02em",
             }}
           >
             Tři kroky, žádná komplikace
@@ -85,19 +98,19 @@ export default function RootPage() {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 24,
+              gap: 16,
             }}
           >
             {steps.map((s) => (
               <div
                 key={s.n}
                 className="glass-card"
-                style={{ padding: "32px 28px" }}
+                style={{ padding: "28px 24px" }}
               >
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     borderRadius: "50%",
                     background: "var(--gold-dim)",
                     border: "1px solid var(--border-gold)",
@@ -106,19 +119,20 @@ export default function RootPage() {
                     justifyContent: "center",
                     fontFamily: "var(--font-heading)",
                     fontWeight: 700,
-                    fontSize: "1.1rem",
+                    fontSize: "0.95rem",
                     color: "var(--gold)",
-                    marginBottom: 20,
+                    marginBottom: 18,
                   }}
                 >
                   {s.n}
                 </div>
                 <h3
                   style={{
-                    fontSize: "1.05rem",
+                    fontSize: "1rem",
                     fontWeight: 700,
-                    marginBottom: 10,
+                    marginBottom: 8,
                     color: "var(--ivory)",
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   {s.title}
@@ -126,8 +140,8 @@ export default function RootPage() {
                 <p
                   style={{
                     color: "var(--muted)",
-                    fontSize: "0.9rem",
-                    lineHeight: 1.65,
+                    fontSize: "0.88rem",
+                    lineHeight: 1.6,
                   }}
                 >
                   {s.text}
@@ -140,24 +154,28 @@ export default function RootPage() {
           <div
             className="glass-card"
             style={{
-              marginTop: 40,
-              padding: "28px 32px",
+              marginTop: 32,
+              padding: "24px 28px",
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: 24,
+              gap: 20,
             }}
           >
-            {[
-              { icon: "📐", label: "Formát A4", desc: "Přesný poměr stran" },
-              { icon: "🎨", label: "Průhledné pozadí", desc: "Sedí na každý web" },
-              { icon: "🔒", label: "Bez hesla pro hosty", desc: "Jen admin potřebuje login" },
-              { icon: "📅", label: "Správné datum", desc: "Nahrát dopředu, zobrazí se ve správný den" },
-              { icon: "🌙", label: "Víkendový režim", desc: "Vypínatelné polední menu" },
-            ].map((f) => (
-              <div key={f.label} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <span style={{ fontSize: "1.3rem", lineHeight: 1 }}>{f.icon}</span>
+            {features.map((f) => (
+              <div key={f.label} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "var(--gold)",
+                    opacity: 0.6,
+                    marginTop: 7,
+                    flexShrink: 0,
+                  }}
+                />
                 <div>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--ivory)", marginBottom: 2 }}>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--ivory)", marginBottom: 2 }}>
                     {f.label}
                   </div>
                   <div style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.4 }}>
@@ -177,7 +195,7 @@ export default function RootPage() {
           padding: "24px 20px",
           textAlign: "center",
           color: "var(--dim)",
-          fontSize: "0.78rem",
+          fontSize: "0.75rem",
         }}
       >
         Polední menu ·{" "}

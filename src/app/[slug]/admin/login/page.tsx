@@ -23,40 +23,42 @@ export default async function LoginPage({ params }: Props) {
         className="glass-card fade-in"
         style={{
           width: "100%",
-          maxWidth: 400,
-          padding: "40px 32px",
+          maxWidth: 380,
+          padding: "48px 36px 40px",
         }}
       >
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div
             style={{
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               borderRadius: "50%",
               background: "var(--gold-dim)",
               border: "1px solid var(--border-gold)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              margin: "0 auto 16px",
-              fontSize: "1.2rem",
+              margin: "0 auto 20px",
             }}
           >
-            🔒
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
           </div>
           <h1
             style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "1.3rem",
+              fontSize: "1.25rem",
               fontWeight: 700,
-              marginBottom: 6,
+              marginBottom: 8,
             }}
           >
             Správa menu
           </h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
-            Zadejte heslo pro přístup
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.5 }}>
+            Zadejte heslo pro přístup do administrace
           </p>
         </div>
 
@@ -66,18 +68,18 @@ export default async function LoginPage({ params }: Props) {
         <div
           style={{
             textAlign: "center",
-            marginTop: 24,
+            marginTop: 28,
             paddingTop: 20,
             borderTop: "1px solid var(--border)",
           }}
         >
           <a
             href={`/${slug}`}
-            className="btn-ghost"
             style={{
               fontSize: "0.8rem",
               color: "var(--muted)",
               textDecoration: "none",
+              transition: "color 0.2s",
             }}
           >
             ← Zpět na web restaurace

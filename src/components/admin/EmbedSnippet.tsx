@@ -68,17 +68,18 @@ export function EmbedSnippet({ menuUrl }: EmbedSnippetProps) {
     <div>
       <pre
         style={{
-          background: "rgba(0,0,0,0.3)",
+          background: "rgba(0,0,0,0.2)",
+          border: "1px solid var(--border)",
           borderRadius: "var(--radius-sm)",
           padding: "12px 14px",
-          fontSize: "0.72rem",
+          fontSize: "0.7rem",
           color: "var(--muted)",
           overflowX: "auto",
           whiteSpace: "pre-wrap",
           wordBreak: "break-all",
           marginBottom: 12,
           lineHeight: 1.6,
-          fontFamily: "monospace",
+          fontFamily: "'SF Mono', 'Fira Code', monospace",
         }}
       >
         {snippet}

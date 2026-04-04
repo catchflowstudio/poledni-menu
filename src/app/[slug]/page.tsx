@@ -30,31 +30,27 @@ export default async function RestaurantPage({ params }: Props) {
       {/* Header */}
       <header
         style={{
-          padding: "40px 20px 20px",
+          padding: "48px 20px 16px",
           textAlign: "center",
         }}
       >
         <h1
           style={{
             fontFamily: "var(--font-heading)",
-            fontSize: "2rem",
+            fontSize: "1.8rem",
             fontWeight: 800,
-            marginBottom: 4,
+            marginBottom: 6,
+            letterSpacing: "-0.02em",
           }}
         >
           {restaurant.name}
         </h1>
-        <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+        <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
           Denní polední nabídka
         </p>
         <div
-          style={{
-            width: 40,
-            height: 2,
-            background: "var(--gold)",
-            margin: "16px auto 0",
-            borderRadius: 1,
-          }}
+          className="divider-subtle"
+          style={{ margin: "20px auto 0" }}
         />
       </header>
 
@@ -64,10 +60,10 @@ export default async function RestaurantPage({ params }: Props) {
       {/* Footer */}
       <footer
         style={{
-          padding: "32px 20px",
+          padding: "40px 20px 24px",
           textAlign: "center",
           color: "var(--dim)",
-          fontSize: "0.75rem",
+          fontSize: "0.72rem",
         }}
       >
         <p>
