@@ -56,7 +56,6 @@ export function RestaurantSettings({ initialValues }: Props) {
     setError("");
     setSaved(false);
 
-    // Also sync serves_weekend based on opening_days
     const servesWeekend = values.opening_days.includes(0) || values.opening_days.includes(6);
 
     const res = await fetch("/api/restaurant/settings", {
@@ -89,6 +88,18 @@ export function RestaurantSettings({ initialValues }: Props) {
     marginTop: 4,
   };
 
+  const chipStyle = (active: boolean): React.CSSProperties => ({
+    padding: "8px 14px",
+    borderRadius: "var(--radius-sm)",
+    border: active ? "1px solid var(--border-gold)" : "1px solid var(--border)",
+    background: active ? "var(--gold-dim)" : "transparent",
+    color: active ? "var(--gold)" : "var(--muted)",
+    cursor: "pointer",
+    fontSize: "0.8rem",
+    fontWeight: active ? 600 : 400,
+    transition: "all 0.15s",
+  });
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
       {/* Název */}
@@ -110,18 +121,6 @@ export function RestaurantSettings({ initialValues }: Props) {
           onChange={(e) => update("phone", e.target.value || null)}
           placeholder="+420 777 000 111"
         />
-      </div>
-
-      {/* Stálé menu */}
-      <div>
-        <label style={labelStyle}>Odkaz na stálé menu</label>
-        <input
-          className="input"
-          value={values.static_menu_url ?? ""}
-          onChange={(e) => update("static_menu_url", e.target.value || null)}
-          placeholder="https://..."
-        />
-        <p style={hintStyle}>PDF nebo stránka se stálým menu</p>
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
@@ -158,27 +157,27 @@ export function RestaurantSettings({ initialValues }: Props) {
         <p style={hintStyle}>Ostatní dny se zobrazí náhradní zpráva</p>
       </div>
 
-      {/* Kdy se menu zobrazí */}
+      {/* Kdy se menu zobrazí — chip buttons instead of select */}
       <div>
         <label style={labelStyle}>Kdy se má menu začít zobrazovat?</label>
-        <select
-          className="input"
-          value={values.menu_active_from}
-          onChange={(e) => update("menu_active_from", e.target.value)}
-          style={{ maxWidth: 200 }}
-        >
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {TIME_OPTIONS.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => update("menu_active_from", t.value)}
+              style={chipStyle(values.menu_active_from === t.value)}
+            >
+              {t.label}
+            </button>
           ))}
-        </select>
-        <p style={hintStyle}>
-          Hodí se, pokud nahráváte menu den předem
-        </p>
+        </div>
+        <p style={hintStyle}>Hodí se, pokud nahráváte menu den předem</p>
       </div>
 
       <div style={{ height: 1, background: "var(--border)" }} />
 
-      {/* Fallback */}
+      {/* Co zobrazit, když menu chybí */}
       <div>
         <label style={labelStyle}>Co zobrazit, když menu není nahrané?</label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
@@ -191,23 +190,7 @@ export function RestaurantSettings({ initialValues }: Props) {
               key={value}
               type="button"
               onClick={() => update("fallback_type", value)}
-              style={{
-                padding: "8px 14px",
-                borderRadius: "var(--radius-sm)",
-                border: values.fallback_type === value
-                  ? "1px solid var(--border-gold)"
-                  : "1px solid var(--border)",
-                background: values.fallback_type === value
-                  ? "var(--gold-dim)"
-                  : "transparent",
-                color: values.fallback_type === value
-                  ? "var(--gold)"
-                  : "var(--muted)",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                fontWeight: values.fallback_type === value ? 600 : 400,
-                transition: "all 0.15s",
-              }}
+              style={chipStyle(values.fallback_type === value)}
             >
               {label}
             </button>
@@ -231,10 +214,20 @@ export function RestaurantSettings({ initialValues }: Props) {
           </div>
         )}
 
-        {values.fallback_type === "static_menu" && !values.static_menu_url && (
-          <p style={{ ...hintStyle, color: "#f59e0b" }}>
-            Vyplňte odkaz na stálé menu výše
-          </p>
+        {values.fallback_type === "static_menu" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <input
+              className="input"
+              value={values.static_menu_url ?? ""}
+              onChange={(e) => update("static_menu_url", e.target.value || null)}
+              placeholder="https://odkaz-na-stale-menu.cz"
+            />
+            {!values.static_menu_url && (
+              <p style={{ ...hintStyle, color: "#f59e0b" }}>
+                Vyplňte odkaz na stálé menu
+              </p>
+            )}
+          </div>
         )}
 
         {values.fallback_type === "phone" && !values.phone && (
