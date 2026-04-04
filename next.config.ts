@@ -12,6 +12,15 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://*.supabase.co";
+    let supabaseHost = "*.supabase.co";
+    try {
+      supabaseHost = new URL(supabaseUrl).host;
+    } catch { /* fallback */ }
+
+    const baseCsp = `default-src 'self'; img-src 'self' https://${supabaseHost}; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://${supabaseHost}; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`;
+    const menuCsp = `default-src 'self'; img-src 'self' https://${supabaseHost}; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://${supabaseHost}; base-uri 'self';`;
+
     return [
       {
         // Security headers pro admin routy
@@ -22,6 +31,7 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           { key: "X-DNS-Prefetch-Control", value: "off" },
+          { key: "Content-Security-Policy", value: baseCsp },
         ],
       },
       {
@@ -40,7 +50,16 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Content-Security-Policy", value: menuCsp },
           // Žádný X-Frame-Options — musí fungovat v iframe
+        ],
+      },
+      {
+        // Landing page a ostatní
+        source: "/((?!api|_next).*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
     ];

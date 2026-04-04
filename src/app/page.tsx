@@ -262,54 +262,6 @@ export default function RootPage() {
         </div>
       </section>
 
-      {/* ── Integrace ── */}
-      <section className="section" style={{ paddingBottom: 100 }}>
-        <div className="container" style={{ maxWidth: 560 }}>
-          <p
-            className="badge"
-            style={{ display: "block", textAlign: "center", marginBottom: 16 }}
-          >
-            Integrace
-          </p>
-          <h2
-            style={{
-              textAlign: "center",
-              fontSize: "clamp(1.4rem, 3vw, 2rem)",
-              marginBottom: 20,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Jeden řádek kódu na váš web
-          </h2>
-          <p
-            style={{
-              textAlign: "center",
-              color: "var(--muted)",
-              fontSize: "0.9rem",
-              lineHeight: 1.6,
-              marginBottom: 32,
-            }}
-          >
-            Vložíte iframe na web restaurace a menu se tam zobrazí automaticky.
-            Žádné pluginy, žádné nastavování.
-          </p>
-          <div
-            className="glass-card"
-            style={{
-              padding: "20px 24px",
-              fontFamily: "monospace",
-              fontSize: "0.78rem",
-              color: "var(--muted)",
-              lineHeight: 1.6,
-              overflowX: "auto",
-              border: "1px solid var(--border)",
-            }}
-          >
-            {`<iframe src="https://menu.catchflow.cz/vase-restaurace/menu" style="width:100%;height:800px;border:none"></iframe>`}
-          </div>
-        </div>
-      </section>
-
       {/* ── Footer ── */}
       <footer
         style={{

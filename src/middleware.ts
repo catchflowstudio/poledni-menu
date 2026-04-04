@@ -5,7 +5,7 @@ const COOKIE_NAME = "pm_session";
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
-  if (!secret) return null;
+  if (!secret || secret.length < 32) return null;
   return new TextEncoder().encode(secret);
 }
 
@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Pouze admin routy (ale ne login)
-  const adminMatch = pathname.match(/^\/([^/]+)\/admin\/(menu)$/);
+  const adminMatch = pathname.match(/^\/([^/]+)\/admin\/(?!login)([\w-]+)$/);
   if (!adminMatch) return NextResponse.next();
 
   const slug = adminMatch[1];
@@ -57,5 +57,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/:slug/admin/menu"],
+  matcher: ["/:slug/admin/:path*"],
 };

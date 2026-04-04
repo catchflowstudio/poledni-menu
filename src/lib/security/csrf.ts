@@ -53,7 +53,6 @@ export function verifyCsrf(request: Request): boolean {
     }
   }
 
-  // Server-to-server volání (cron) nemají Origin/Referer
-  // → povolíme, autorizace se řeší jinde (Bearer token)
-  return true;
+  // Bez Origin i Referer — odmítneme (cron endpointy mají vlastní Bearer auth)
+  return false;
 }

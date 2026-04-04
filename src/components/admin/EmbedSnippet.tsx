@@ -24,11 +24,13 @@ export function EmbedSnippet({ menuUrl }: EmbedSnippetProps) {
   allowtransparency="true"
   scrolling="no"
   loading="lazy"
-  style="width:100%;aspect-ratio:210/297;border:none;display:block;background:transparent;"
+  style="width:100%;height:600px;border:none;display:block;background:transparent;"
 ></iframe>
 <script>
 (function(){
   var ORIGIN='${menuOrigin}';
+  var iframe=document.getElementById('poledni-menu');
+  // Lightbox overlay
   var o=document.createElement('div');
   o.tabIndex=-1;
   o.style.cssText='display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);cursor:zoom-out;align-items:center;justify-content:center;padding:24px;outline:none;';
@@ -46,10 +48,15 @@ export function EmbedSnippet({ menuUrl }: EmbedSnippetProps) {
   o.onkeydown=function(e){if(e.key==='Escape')o.style.display='none';};
   window.addEventListener('message',function(e){
     if(e.origin!==ORIGIN)return;
-    if(!e.data||e.data.type!=='menu-zoom')return;
-    img.src=e.data.src;
-    o.style.display='flex';
-    o.focus();
+    if(!e.data)return;
+    // Auto-resize iframe
+    if(e.data.type==='menu-resize'&&e.data.height>0){
+      iframe.style.height=e.data.height+'px';
+    }
+    // Lightbox zoom
+    if(e.data.type==='menu-zoom'){
+      img.src=e.data.src;o.style.display='flex';o.focus();
+    }
   });
 })();
 <\/script>`;

@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { safeCompare } from "@/lib/security/timing";
+import { verifySaToken } from "@/app/api/superadmin/auth/route";
+import { verifyCsrf } from "@/lib/security/csrf";
+import { sanitizeField, sanitizePhone } from "@/lib/security/sanitize";
+import { logSecurityEvent } from "@/lib/security/logger";
 import bcrypt from "bcrypt";
 
 async function checkAuth() {
@@ -9,7 +12,7 @@ async function checkAuth() {
   const token = cookieStore.get("sa_token")?.value;
   const secret = process.env.SUPERADMIN_SECRET;
   if (!secret || !token) return false;
-  return safeCompare(token, secret);
+  return verifySaToken(token, secret);
 }
 
 /** GET /api/superadmin/restaurants — seznam všech restaurací */
@@ -35,12 +38,9 @@ export async function GET() {
     .order("valid_for_date", { ascending: false });
 
   // Spočítej dnešní a zítřejší datum (Prague timezone)
-  const now = new Date();
-  const pragueNow = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Prague" }));
-  const today = pragueNow.toISOString().split("T")[0];
-  const pragueNowTomorrow = new Date(pragueNow);
-  pragueNowTomorrow.setDate(pragueNowTomorrow.getDate() + 1);
-  const tomorrow = pragueNowTomorrow.toISOString().split("T")[0];
+  const { getTodayPrague, getTomorrowPrague } = await import("@/lib/date/prague");
+  const today = getTodayPrague();
+  const tomorrow = getTomorrowPrague();
 
   const menusByRestaurant: Record<string, { last: string; dates: Set<string>; lastUpload: string }> = {};
   for (const m of menus ?? []) {
@@ -83,18 +83,25 @@ export async function GET() {
 }
 
 /** POST /api/superadmin/restaurants — vytvoří novou restauraci */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  if (!verifyCsrf(req)) {
+    logSecurityEvent("csrf_rejected", { url: req.url });
+    return NextResponse.json({ error: "Neplatný požadavek." }, { status: 403 });
+  }
+
   if (!(await checkAuth())) {
     return NextResponse.json({ error: "Nepřihlášen." }, { status: 401 });
   }
 
   const body = await req.json();
-  const { slug, name, password, phone } = body as {
+  const { slug, password } = body as {
     slug: string;
     name: string;
     password: string;
     phone?: string;
   };
+  const name = sanitizeField(body.name, 100);
+  const phone = body.phone ? sanitizePhone(body.phone) : undefined;
 
   if (!slug || !name || !password) {
     return NextResponse.json({ error: "Slug, název a heslo jsou povinné." }, { status: 400 });
