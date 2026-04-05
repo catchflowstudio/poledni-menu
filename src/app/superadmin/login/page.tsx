@@ -32,7 +32,7 @@ export default function SuperadminLogin() {
     <div className="page-center">
       <div className="glass-card" style={{ padding: 40, width: "100%", maxWidth: 360 }}>
         <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem", marginBottom: 8 }}>
-          Lístek
+          Polední menu <span style={{ fontWeight: 400, fontSize: "0.75em", color: "var(--muted)" }}>by Catchflow</span>
         </h1>
         <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginBottom: 28 }}>
           Superadmin přístup

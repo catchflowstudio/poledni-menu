@@ -1,4 +1,4 @@
-export const metadata = { title: "Superadmin — Lístek" };
+export const metadata = { title: "Superadmin — Polední menu" };
 
 export default function SuperadminLayout({
   children,
