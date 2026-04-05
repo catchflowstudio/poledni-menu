@@ -1,15 +1,13 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { checkSaAuth } from "@/lib/security/superadmin";
 import { SuperadminDashboard } from "@/components/admin/SuperadminDashboard";
 
 export const dynamic = "force-dynamic";
 
 export default async function SuperadminPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("sa_token")?.value;
-  const secret = process.env.SUPERADMIN_SECRET;
+  const isAuth = await checkSaAuth();
 
-  if (!secret || token !== secret) {
+  if (!isAuth) {
     redirect("/superadmin/login");
   }
 
